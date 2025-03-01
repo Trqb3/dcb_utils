@@ -2,7 +2,6 @@
 /.idea
 
 # Test files
-/test
 
 # Dependencies
 /node_modules
