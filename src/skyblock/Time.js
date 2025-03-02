@@ -2,7 +2,8 @@
 
 const EventEmitter = require('events');
 const Options = require('../util/Options');
-const { DcbError, DcbTypeError, ErrorCodes } = require('../errors');
+const { DcbError, DcbTypeError } = require('../errors/DcbError');
+const ErrorCodes = require('../errors/ErrorCodes');
 
 /**
  * Der Skyblock EPOCH Timestamp

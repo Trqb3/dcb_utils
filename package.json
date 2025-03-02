@@ -1,6 +1,6 @@
 {
   "name": "dcb_utils",
-  "version": "2.1.6",
+  "version": "2.2.8",
   "description": "Discord Bot Utils for Hypixel Skyblock based Discord Bots",
   "main": "typings/index.js",
   "scripts": {

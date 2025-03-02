@@ -2,7 +2,8 @@
 
 const mysql = require('mysql2/promise');
 const Options = require('../util/Options');
-const { DcbError, DcbTypeError, ErrorCodes } = require('../errors');
+const { DcbError, DcbTypeError } = require('../errors/DcbError');
+const ErrorCodes = require('../errors/ErrorCodes');
 
 /**
  * Basis Klasse für das Aufbauen von Datenbank verbindungen
@@ -15,7 +16,6 @@ class Database {
         if (!options) throw new DcbError(ErrorCodes.MissingArgument, 'options');
         if (typeof options !== 'object') throw new DcbTypeError(ErrorCodes.InvalidType, 'options', 'object');
 
-        this.databases = options.databases;
         this.host = options.host;
         this.user = options.user;
         this._ready = false;

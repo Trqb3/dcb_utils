@@ -6,7 +6,6 @@ const Logger = require("../util/Logger");
 /**
  * Optionen für die Datenbank Verbindung
  * @typedef {Object} DatabaseOptions
- * @property {string|string[]} databases Datenbanken auf welche zugegriffen werden sollen
  * @property {string} host Hostname der Datenbank
  * @property {string} user Benutzername des Nutzers welche benutzt wird, um auf die Datenbank zuzugreifen
  * @property {number} port Port der Datenbank
@@ -47,7 +46,7 @@ const Logger = require("../util/Logger");
 /**
  * Discord Event Optionen
  * @typedef {Object} EventOptions
- * @property {string} dir Dateipfad zu dem Ordner in welchem die Eventdateien liegen
+ * @property {string} dir Aktueller Dateipfad
  * @property {Client} client Discord Client
  * @property {Logger} logger Logger
  * */
