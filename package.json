@@ -1,8 +1,8 @@
 {
   "name": "dcb_utils",
-  "version": "1.0.0",
+  "version": "2.1.6",
   "description": "Discord Bot Utils for Hypixel Skyblock based Discord Bots",
-  "main": "src/index.js",
+  "main": "typings/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc"
