@@ -1,7 +1,7 @@
 'use strict';
 
 const EventEmitter = require('events');
-const Options = require('../util/Options');
+const { SkyblockTimeFormat } = require('../util/Options');
 const { DcbError, DcbTypeError } = require('../errors/DcbError');
 const ErrorCodes = require('../errors/ErrorCodes');
 
@@ -42,12 +42,22 @@ const sbMonths = [
     SbMonth.LateWinter
 ];
 
+/**
+ * Skyblock Zeit
+ * @extends EventEmitter
+ * */
 class Time extends EventEmitter {
     constructor() {
         super();
         this.time = this.get(new Date());
     }
 
+    /**
+     * Fügt einen Listener hinzu, welcher bei einer Änderung der Skyblock Zeit aufgerufen wird
+     * @param {string} eventName Name des Events
+     * @param {(time: SkyblockTimeFormat) => void} listener Funktion welche aufgerufen wird
+     * @returns {void}
+     * */
     on(eventName, listener) {
         if (!eventName) throw new DcbError(ErrorCodes.MissingArgument, 'eventName');
         if (typeof eventName !== 'string') throw new DcbTypeError(ErrorCodes.InvalidType, 'eventName', 'string');
@@ -63,7 +73,7 @@ class Time extends EventEmitter {
     /**
      * Kann die Skyblock Zeit anhand einer mitgegebenen Zeit berechnen
      * @param {Date} date Zeit welche benutzt werden soll, um die Skyblock Zeit zu berechnen
-     * @returns {SbTimeFormat} Skyblock zeit
+     * @returns {SkyblockTimeFormat & {day: number, month: (number), year: number, string: string, hour: number, minute: number, poch: number}} Skyblock zeit
      * @example
      * const time = sbt.get(new Date());
      * */
@@ -82,7 +92,7 @@ class Time extends EventEmitter {
         const year = sbYear;
         const string = this.#ampm(hour, minute);
 
-        return { day, month, year, string, hour, minute, poch };
+        return Object.assign(Object.create(SkyblockTimeFormat), { day, month, year, string, hour, minute, poch });
     }
 
     /**
@@ -147,10 +157,10 @@ class Time extends EventEmitter {
 
     /**
      * Berechnet einen Zeitpunkt in der Zukunft oder Vergangenheit. Die Berechnung basiert auf die angabe des {@link negative} Parameters.
-     * @param {SbTimeFormat} sbTime Skyblock Zeit
+     * @param {SkyblockTimeFormat} sbTime Skyblock Zeit
      * @param {number} sbMinutes Skyblock Minuten welche hinzugefügt oder abgezogen werden sollen
      * @param {boolean} [negative=false] Soll die Zeit in die Vergangenheit berechnet werden
-     * @returns {SbTimeFormat} Skyblock Zeit
+     * @returns {SkyblockTimeFormat} Skyblock Zeit
      * @example
      * const unix = sbt.unix(time, 10);
      * const unix = sbt.unix(time, 10, true);
@@ -181,8 +191,8 @@ class Time extends EventEmitter {
 
     /**
      * Durch das Hinzufügen oder Abziehen von Tagen, Stunden und Minuten wird die Skyblock Zeit falsch berechnet. Diese Funktion korrigiert die Skyblock Zeit.
-     * @param {SbTimeFormat} sbTime Skyblock Zeit
-     * @returns {SbTimeFormat} Skyblock Zeit
+     * @param {SkyblockTimeFormat} sbTime Skyblock Zeit
+     * @returns {SkyblockTimeFormat} Skyblock Zeit
      * */
     #adjustTime(sbTime) {
         while (sbTime.day <= 0 || sbTime.day > 31) {

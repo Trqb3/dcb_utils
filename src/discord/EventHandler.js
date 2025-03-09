@@ -31,15 +31,24 @@ class EventHandler {
 
             eventFiles.sort((a, b) => (a > b ? 1 : -1));
 
+            /**
+             * @param {string} eventName Name des Discord Events
+             * */
             const eventName = eventFolder.replace(/\\/g, '/').split('/').pop();
 
             if (eventName) {
-                this.client.on(eventName, async (arg)  => {
+                /**
+                 * Event Listener für das aufgerufene Discord Event
+                 * @param {Client<true>} arg Argument von Discord.js
+                 * */
+                const eventHandler = async (arg) => {
                     for (const eventFile of eventFiles) {
                         const { default: eventFunction } = await import(pathToFileURL(eventFile).href);
                         await (await eventFunction)(arg, this.client, this.logger);
                     }
-                });
+                };
+
+                this.client.on(eventName, eventHandler);
             }
         }
     }

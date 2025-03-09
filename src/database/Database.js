@@ -12,7 +12,7 @@ class Database {
     /**
      * @param {DatabaseOptions} options Konfiguration's Optionen für die Datenbank Verbindung
      * */
-    constructor(options) {
+    constructor(options) {a
         if (!options) throw new DcbError(ErrorCodes.MissingArgument, 'options');
         if (typeof options !== 'object') throw new DcbTypeError(ErrorCodes.InvalidType, 'options', 'object');
 
@@ -35,7 +35,7 @@ class Database {
      * @param {string} password Passwort für den Datenbank login
      * @returns {Promise<mysql.Connection>} Verbindung zur Datenbank
      * @example
-     * db.login('mein super sicheres passwort');
+     * await db.login('mein super sicheres passwort');
      * */
     async login(password) {
         if (!this.host) throw new DcbError(ErrorCodes.MissingArgument, 'host');
@@ -64,6 +64,11 @@ class Database {
         }
     }
 
+    /**
+     * Trennt eine vorhandene Verbindung zur Datenbank
+     * @example
+     * await db.disconnect();
+     * */
     async disconnect() {
         if (this.connection) {
             await this.connection.end();
@@ -71,7 +76,19 @@ class Database {
         }
     }
 
-    async query(database, sql) {
+    /**
+     * Führt eine SQL Query auf der Datenbank aus
+     * @param {string} database Datenbank Name
+     * @param {string} sql SQL Query
+     * @param {Array<any>} [values=[]] SQL Query Werte
+     * @returns {Promise<Array<any>>} Ergebnis der SQL Query
+     * @example
+     * const sql = `SELECT * FROM meineTabelle WHERE id = ?`;
+     * const result = await db.query('meineDatenbank', sql, [
+     *  1
+     * ]);
+     * */
+    async query(database, sql, values = []) {
         if (!this._ready) throw new DcbError(ErrorCodes.NotReady);
 
         if (!database) throw new DcbError(ErrorCodes.MissingArgument, 'database');
@@ -82,7 +99,7 @@ class Database {
 
         try {
             await this.connection.query(`USE \`${database}\``);
-            const [rows] = await this.connection.query(sql);
+            const [rows] = await this.connection.query(sql, values);
             return rows;
         } catch (error) {
             throw error;

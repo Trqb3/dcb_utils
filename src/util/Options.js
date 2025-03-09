@@ -13,7 +13,7 @@ const Logger = require("../util/Logger");
 
 /**
  * Angabe von Skyblock Zeit
- * @typedef {Object} SbTimeFormat
+ * @typedef {Object} SkyblockTimeFormat
  * @property {number} day Tag des Skyblock Kalenders
  * @property {number} month Monat des Skyblock Kalenders
  * @property {number} year Jahr des Skyblock Kalenders
@@ -21,6 +21,7 @@ const Logger = require("../util/Logger");
  * @property {number} hour Stunde des Skyblock Kalenders
  * @property {number} minute Minute des Skyblock Kalenders
  * @property {number} poch Poche des Skyblock Kalenders
+ * @property {function(): number} toUnix Funktion, welche die Skyblock Zeit in einen Unix Timestamp umwandelt
  * */
 
 /**
@@ -50,3 +51,31 @@ const Logger = require("../util/Logger");
  * @property {Client} client Discord Client
  * @property {Logger} logger Logger
  * */
+
+
+/** @type {DatabaseOptions} */
+const DatabaseOptions = {};
+
+/**
+ * Der Skyblock EPOCH Timestamp
+ * */
+const SB_EPOCH = 1560275700000;
+
+const SkyblockTimeFormat = {
+    toUnix() {
+        const { day, month, year, hour, minute } = this;
+        return Math.floor((SB_EPOCH + (year - 1) * 446400000 + (month - 1) * 37200000 + (day - 1) * 1200000 + hour * 50000 + minute * 50000 / 6) / 1000);
+    }
+};
+
+/** @type {EventConfig} */
+const EventConfig = {};
+
+/** @type {EventOptions} */
+const EventOptions = {};
+
+
+module.exports.DatabaseOptions = DatabaseOptions;
+module.exports.SkyblockTimeFormat = SkyblockTimeFormat;
+module.exports.EventConfig = EventConfig;
+module.exports.EventOptions = EventOptions;

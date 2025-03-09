@@ -3,8 +3,10 @@
 const Options = require('../util/Options');
 const { DcbError, DcbTypeError } = require('../errors/DcbError');
 const ErrorCodes = require('../errors/ErrorCodes');
-const SkyblockTime = require('./Time');
 
+/**
+ * Hauptklasse für die Skyblock Events
+ * */
 class SkyblockEvents {
     /**
      * @param {EventConfig} config Konfiguration für ein Event
@@ -17,7 +19,7 @@ class SkyblockEvents {
 
     /**
      * Funktion dient zur überprüfung, ob zur angegebenen Skyblock Zeit ein Skyblock Event stattfindet
-     * @param {SbTimeFormat} sbTime Skyblock Zeit
+     * @param {SkyblockTimeFormat} sbTime Skyblock Zeit
      * @param {boolean} negative Soll die Zeit subtrahiert oder addiert werden?
      * @returns {boolean} Soll das Event gepingt werden?
      * @example
@@ -29,15 +31,12 @@ class SkyblockEvents {
 
         if (typeof negative !== 'boolean') throw new DcbTypeError(ErrorCodes.MissingArgument, 'negative', 'boolean');
 
-        const sbt = new SkyblockTime();
-        const notifySbTime = sbt.recalculate(sbTime, this.config.pre_ping, negative);
-
         const matches = [
-            this.config.day === undefined || this.config.day === notifySbTime.day,
-            this.config.month === undefined || this.config.month === notifySbTime.month,
-            this.config.year === undefined || this.config.year === notifySbTime.year,
-            this.config.hour === undefined || this.config.hour === notifySbTime.hour,
-            this.config.minute === undefined || this.config.minute === notifySbTime.minute
+            this.config.day === null || this.config.day === sbTime.day,
+            this.config.month === null || this.config.month === sbTime.month,
+            this.config.year === null || this.config.year === sbTime.year,
+            this.config.hour === null || this.config.hour === sbTime.hour,
+            this.config.minute === null || this.config.minute === sbTime.minute
         ];
 
         return matches.every(Boolean);
