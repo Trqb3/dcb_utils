@@ -1,26 +1,38 @@
-import { Client, Guild } from "discord.js";
+import {
+    Client,
+    Guild,
+    Collection,
+    ApplicationCommand,
+    ApplicationCommandData,
+    ApplicationCommandManager,
+    GuildApplicationCommandManager
+} from "discord.js";
 import path, { join } from "path";
 import FileManager from "../util/FileManager";
+import Logger from "../util/Logger";
 import { existsSync, mkdirSync } from "fs";
 
 export default class CommandManager {
     public dir: string;
     public client: Client;
+    public logger: Logger;
     public exceptions: string[] | undefined;
     public commands: {
         local: Map<string, any>,
-        remote: Map<string, any>
+        application: Map<string, any>
     };
 
     /**
      * Main class for handling commands within a discord bot
      * @param dir - The directory where the commands are stored
      * @param client - The discord client
+     * @param logger - The logger instance
      * @param exceptions - An array of command names to exclude from the command manager
      * */
-    constructor(dir: string, client: Client, exceptions?: string[]) {
+    constructor(dir: string, client: Client, logger: Logger, exceptions?: string[]) {
         this.dir = join(dir, 'commands');
         this.client = client;
+        this.logger = logger;
         this.exceptions = exceptions;
 
         if (!existsSync(this.dir)) {
@@ -30,16 +42,14 @@ export default class CommandManager {
 
         this.commands = {
             local: new Map(),
-            remote: new Map()
+            application: new Map()
         };
 
         this.fetchLocalCommands();
-        this.fetchRemoteCommands();
     }
 
     private fetchLocalCommands(): void {
         const fm = new FileManager();
-
         const cmdCats = fm.get(this.dir, true);
 
         for (const cat of cmdCats) {
@@ -59,9 +69,110 @@ export default class CommandManager {
         }
     }
 
-    private fetchRemoteCommands(): void {
-        this.client.guilds.cache.forEach(async (guild: Guild): Promise<void> => {
-            this.commands.remote.set(guild.id, await guild.commands.fetch());
-        });
+    private async fetchApplicationCommands(guildId?: string): Promise<ApplicationCommandManager | GuildApplicationCommandManager> {
+        if (guildId) {
+            const guild: Guild = await this.client.guilds.fetch(guildId);
+            await guild.commands.fetch();
+            return guild.commands;
+        }
+
+        const applicationCommands = this.client.application!.commands;
+        await applicationCommands.fetch();
+        return applicationCommands;
+    }
+
+    private areCommandsDifferent(existingCommand: any, localCommand: any): boolean {
+        const areChoicesDifferent = (existingChoices: any[], localChoices: any[]): boolean => {
+            for (const localChoice of localChoices) {
+                const existingChoice = existingChoices?.find(
+                    (choice): boolean => choice.name === localChoice.name
+                );
+
+                if (!existingChoice) return true;
+                if (localChoice.value !== existingChoice.value) return true;
+            }
+            return false;
+        };
+
+        const areOptionsDifferent = (existingOptions: any[], localOptions: any[]): boolean => {
+            for (const localOption of localOptions) {
+                const existingOption = existingOptions?.find(
+                    (option): boolean => option.name === localOption.name
+                );
+
+                if (!existingOption) return true;
+
+                if (
+                    localOption.description !== existingOption.description ||
+                    localOption.type !== existingOption.type ||
+                    localOption.required !== existingOption.required ||
+                    (localOption.choices?.length || 0) !== (existingOption.choices?.length || 0) ||
+                    areChoicesDifferent(
+                        localOption.choices || [],
+                        existingOption.choices || []
+                    )
+                ) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        if (
+            existingCommand.description !== localCommand.description ||
+            existingCommand.options?.length !== (localCommand.options?.length || 0) ||
+            areOptionsDifferent(existingCommand.options, localCommand.options || [])
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Register commands. If GuildId is provided, commands will be registered for that guild only. Otherwise, commands will be registered globally.
+     * If the command is marked as deleted, it will be removed.
+     * @param guildId - Optional guild ID to register commands for. If not provided, commands will be registered globally.
+     * */
+    public async registerCommands(guildId?: string): Promise<void> {
+        const stats = { created: 0, updated: 0, deleted: 0, skipped: 0 };
+
+        try {
+            const applicationCommands = await this.fetchApplicationCommands(guildId);
+
+            for (const [name, localCommand] of this.commands.local) {
+                const { description, options } = localCommand;
+                const existingCommand = applicationCommands.cache.find((cmd: ApplicationCommand): boolean => cmd.name === name);
+
+                if (existingCommand) {
+                    if (localCommand.deleted) {
+                        await applicationCommands.delete(existingCommand.id);
+                        stats.deleted++;
+                        continue;
+                    }
+
+                    if (this.areCommandsDifferent(existingCommand, localCommand)) {
+                        await applicationCommands.edit(existingCommand.id, { description, options });
+                        stats.updated++;
+                    }
+                } else {
+                    if (localCommand.deleted) {
+                        stats.skipped++;
+                        continue;
+                    }
+
+                    await applicationCommands.create({ name, description, options } as ApplicationCommandData);
+                    stats.created++;
+                }
+            }
+
+            if (stats.created || stats.updated || stats.deleted) {
+                this.logger.write(0, `Commands synced${guildId ? ` for guild [${guildId}]` : ' globally'}: ${stats.created} created, ${stats.updated} updated, ${stats.deleted} deleted`);
+            } else {
+                this.logger.write(0, `Commands already in sync${guildId ? ` for guild [${guildId}]` : ' globally'}`);
+            }
+        } catch (error) {
+            this.logger.write(2, `registerCommands${guildId ? ` > guild [${guildId}]` : ' > global'}`, error);
+        }
     }
 }
