@@ -1,8 +1,9 @@
 // Discord
 import CommandManager from './discord/CommandManager';
 import EventHandler from './discord/EventHandler';
+import { EventOptions, Command } from './discord/EventHandler';
 
-export { CommandManager, EventHandler };
+export { CommandManager, EventHandler, EventOptions, Command };
 
 
 // Errors

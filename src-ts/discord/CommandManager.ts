@@ -1,7 +1,6 @@
 import {
     Client,
     Guild,
-    Collection,
     ApplicationCommand,
     ApplicationCommandData,
     ApplicationCommandManager,
@@ -11,6 +10,14 @@ import path, { join } from "path";
 import FileManager from "../util/FileManager";
 import Logger from "../util/Logger";
 import { existsSync, mkdirSync } from "fs";
+
+
+export interface CommandManagerOptions {
+    dir: string;
+    client: Client;
+    logger: Logger;
+    exceptions?: string[];
+}
 
 export default class CommandManager {
     public dir: string;
@@ -24,16 +31,13 @@ export default class CommandManager {
 
     /**
      * Main class for handling commands within a discord bot
-     * @param dir - The directory where the commands are stored
-     * @param client - The discord client
-     * @param logger - The logger instance
-     * @param exceptions - An array of command names to exclude from the command manager
-     * */
-    constructor(dir: string, client: Client, logger: Logger, exceptions?: string[]) {
-        this.dir = join(dir, 'commands');
-        this.client = client;
-        this.logger = logger;
-        this.exceptions = exceptions;
+     * @param options - The options for the command manager
+     */
+    constructor(options: CommandManagerOptions) {
+        this.dir = join(options.dir, 'commands');
+        this.client = options.client;
+        this.logger = options.logger;
+        this.exceptions = options.exceptions;
 
         if (!existsSync(this.dir)) {
             mkdirSync(this.dir);
