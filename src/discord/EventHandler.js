@@ -70,7 +70,7 @@ class EventHandler {
             return;
         const command = this.commandManager.commands.local.get(interaction.commandName);
         if (!command) {
-            this.logger.write(1, `Unknown command executed: ${interaction.commandName}`);
+            this.logger.write(1, `⚠️ Unknown command executed: ${interaction.commandName}`);
             return;
         }
         try {
@@ -112,7 +112,7 @@ class EventHandler {
             await command.callback(interaction, this.client, this.logger);
         }
         catch (error) {
-            this.logger.write(2, `Command execution failed: ${interaction.commandName}`, error);
+            this.logger.write(2, `❌ Command execution failed: ${interaction.commandName}`, error);
         }
     }
 }
