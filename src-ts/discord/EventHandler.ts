@@ -54,8 +54,6 @@ export default class EventHandler {
         const fm = new FileManager();
         this.eventFolders = fm.get(this.dir, true);
 
-        this.registerEvents();
-
         this.client.once('clientReady', async (): Promise<void> => {
             await this.commandManager.registerCommands();
 
@@ -67,6 +65,8 @@ export default class EventHandler {
                 );
             }
         });
+
+        this.registerEvents();
     }
 
     private registerEvents(): void {

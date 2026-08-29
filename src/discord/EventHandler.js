@@ -37,13 +37,13 @@ class EventHandler {
         }
         const fm = new FileManager_1.default();
         this.eventFolders = fm.get(this.dir, true);
-        this.registerEvents();
         this.client.once('clientReady', async () => {
             await this.commandManager.registerCommands();
             if (this.useDefaultCommandInteractionHandler) {
                 this.client.on('interactionCreate', (interaction) => this.handleCommandInteraction(interaction));
             }
         });
+        this.registerEvents();
     }
     registerEvents() {
         for (const folder of this.eventFolders) {
