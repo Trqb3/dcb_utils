@@ -182,7 +182,7 @@ DCB Utils is well-suited for:
 
 ## License
 
-ISC License
+MIT License
 
 ## Author
 
