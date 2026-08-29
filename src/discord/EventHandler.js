@@ -43,6 +43,7 @@ class EventHandler {
             if (this.useDefaultCommandInteractionHandler) {
                 this.client.on('interactionCreate', (interaction) => this.handleCommandInteraction(interaction));
             }
+            this.logger.write(0, '🔌 Bot startup successful!', this.client.user?.tag);
         });
         this.registerEvents();
     }

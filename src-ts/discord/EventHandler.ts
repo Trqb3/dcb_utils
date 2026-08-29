@@ -64,6 +64,8 @@ export default class EventHandler {
                         this.handleCommandInteraction(interaction)
                 );
             }
+
+            this.logger.write(0, '🔌 Bot startup successful!', this.client.user?.tag);
         });
 
         this.registerEvents();
