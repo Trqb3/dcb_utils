@@ -45,10 +45,12 @@ export default class EventHandler {
         this.testServer = options.testServer;
 
         this.commandManager = new CommandManager(
-            options.commandsDir ?? options.dir,
-            this.client,
-            this.logger,
-            options.commandExceptions
+            {
+                dir: options.commandsDir ?? options.dir,
+                client: this.client,
+                logger: this.logger,
+                exceptions: options.commandExceptions
+            }
         );
 
         this.dir = join(options.dir, 'events');
