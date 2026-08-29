@@ -130,41 +130,48 @@ class CommandManager {
      * @param guildId - Optional guild ID to register commands for. If not provided, commands will be registered globally.
      * */
     async registerCommands(guildId) {
-        const stats = { created: 0, updated: 0, deleted: 0, skipped: 0 };
         try {
             const applicationCommands = await this.fetchApplicationCommands(guildId);
             for (const [name, localCommand] of this.commands.local) {
-                const { description, options } = localCommand;
-                const existingCommand = applicationCommands.cache.find((cmd) => cmd.name === name);
-                if (existingCommand) {
-                    if (localCommand.deleted) {
-                        await applicationCommands.delete(existingCommand.id);
-                        stats.deleted++;
+                try {
+                    const { description, options } = localCommand;
+                    const existingCommand = applicationCommands.cache.find((cmd) => cmd.name === name);
+                    if (existingCommand) {
+                        if (localCommand.deleted) {
+                            await applicationCommands.delete(existingCommand.id);
+                            this.logger.write(0, `Command "${name}" deleted`);
+                            continue;
+                        }
+                        if (this.areCommandsDifferent(existingCommand, localCommand)) {
+                            await applicationCommands.edit(existingCommand.id, {
+                                description,
+                                options
+                            });
+                            this.logger.write(0, `Command "${name}" updated`);
+                        }
+                        else {
+                            this.logger.write(0, `Command "${name}" unchanged`);
+                        }
                         continue;
                     }
-                    if (this.areCommandsDifferent(existingCommand, localCommand)) {
-                        await applicationCommands.edit(existingCommand.id, { description, options });
-                        stats.updated++;
-                    }
-                }
-                else {
                     if (localCommand.deleted) {
-                        stats.skipped++;
+                        this.logger.write(0, `Command "${name}" skipped`);
                         continue;
                     }
-                    await applicationCommands.create({ name, description, options });
-                    stats.created++;
+                    await applicationCommands.create({
+                        name,
+                        description,
+                        options
+                    });
+                    this.logger.write(0, `Command "${name}" created`);
                 }
-            }
-            if (stats.created || stats.updated || stats.deleted) {
-                this.logger.write(0, `Commands synced${guildId ? ` for guild [${guildId}]` : ' globally'}: ${stats.created} created, ${stats.updated} updated, ${stats.deleted} deleted`);
-            }
-            else {
-                this.logger.write(0, `Commands already in sync${guildId ? ` for guild [${guildId}]` : ' globally'}`);
+                catch (error) {
+                    this.logger.write(2, `Command "${name}" failed to sync${guildId ? ` for guild [${guildId}]` : ''}`, error);
+                }
             }
         }
         catch (error) {
-            this.logger.write(2, `registerCommands${guildId ? ` > guild [${guildId}]` : ' > global'}`, error);
+            this.logger.write(2, `Failed to fetch application commands${guildId ? ` for guild [${guildId}]` : ''}`, error);
         }
     }
 }
