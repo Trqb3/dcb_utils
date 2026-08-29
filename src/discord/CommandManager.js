@@ -157,7 +157,7 @@ class CommandManager {
                     if (existingCommand) {
                         if (localCommand.deleted) {
                             await applicationCommands.delete(existingCommand.id);
-                            this.logger.write(0, `⚠️ Command "${name}" deleted`);
+                            this.logger.write(0, `🗑️ Command "${name}" deleted`);
                             continue;
                         }
                         if (this.areCommandsDifferent(existingCommand, localCommand)) {
@@ -165,15 +165,15 @@ class CommandManager {
                                 description,
                                 options
                             });
-                            this.logger.write(0, `⚠️ Command "${name}" updated`);
+                            this.logger.write(0, `🔄 Command "${name}" updated`);
                         }
                         else {
-                            this.logger.write(0, `⚠️ Command "${name}" unchanged`);
+                            this.logger.write(0, `⏭️ Command "${name}" unchanged`);
                         }
                         continue;
                     }
                     if (localCommand.deleted) {
-                        this.logger.write(0, `⚠️ Command "${name}" skipped`);
+                        this.logger.write(0, `⏭️ Command "${name}" skipped`);
                         continue;
                     }
                     await applicationCommands.create({

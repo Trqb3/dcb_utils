@@ -205,7 +205,7 @@ export default class CommandManager {
                         if (localCommand.deleted) {
                             await applicationCommands.delete(existingCommand.id);
 
-                            this.logger.write(0, `⚠️ Command "${name}" deleted`);
+                            this.logger.write(0, `🗑️ Command "${name}" deleted`);
 
                             continue;
                         }
@@ -216,16 +216,16 @@ export default class CommandManager {
                                 options
                             });
 
-                            this.logger.write(0, `⚠️ Command "${name}" updated`);
+                            this.logger.write(0, `🔄 Command "${name}" updated`);
                         } else {
-                            this.logger.write(0, `⚠️ Command "${name}" unchanged`);
+                            this.logger.write(0, `⏭️ Command "${name}" unchanged`);
                         }
 
                         continue;
                     }
 
                     if (localCommand.deleted) {
-                        this.logger.write(0, `⚠️ Command "${name}" skipped`);
+                        this.logger.write(0, `⏭️ Command "${name}" skipped`);
 
                         continue;
                     }
