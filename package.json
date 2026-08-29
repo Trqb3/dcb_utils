@@ -16,7 +16,7 @@
     "SkyBlock"
   ],
   "author": "trqb3",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "discord.js": "^14.18.0",
     "dotenv": "^16.4.7",
