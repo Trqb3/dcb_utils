@@ -21,6 +21,6 @@ export default class EventHandler {
     readonly useDefaultCommandInteractionHandler: boolean;
     private readonly eventFolders;
     constructor(options: EventOptions);
-    start(): Promise<void>;
+    private registerEvents;
     private handleCommandInteraction;
 }

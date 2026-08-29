@@ -6,7 +6,6 @@ import { Command } from "./CommandManager";
 import { join } from 'path';
 import { existsSync, mkdirSync, Dirent } from 'fs';
 import { pathToFileURL } from "url";
-import { once } from 'events';
 
 export interface EventOptions {
     dir: string;
@@ -36,16 +35,16 @@ export default class EventHandler {
         this.logger = options.logger;
         this.devs = options.devs ?? [];
         this.testServer = options.testServer;
-        this.useDefaultCommandInteractionHandler = options.useDefaultCommandInteractionHandler ?? true;
 
-        this.commandManager = new CommandManager(
-            {
-                dir: options.commandsDir ?? options.dir,
-                client: this.client,
-                logger: this.logger,
-                exceptions: options.commandExceptions
-            }
-        );
+        this.useDefaultCommandInteractionHandler =
+            options.useDefaultCommandInteractionHandler ?? true;
+
+        this.commandManager = new CommandManager({
+            dir: options.commandsDir ?? options.dir,
+            client: this.client,
+            logger: this.logger,
+            exceptions: options.commandExceptions
+        });
 
         if (!existsSync(this.dir)) {
             mkdirSync(this.dir);
@@ -54,9 +53,23 @@ export default class EventHandler {
 
         const fm = new FileManager();
         this.eventFolders = fm.get(this.dir, true);
+
+        this.registerEvents();
+
+        this.client.once('clientReady', async (): Promise<void> => {
+            await this.commandManager.registerCommands();
+
+            if (this.useDefaultCommandInteractionHandler) {
+                this.client.on(
+                    'interactionCreate',
+                    (interaction: Interaction): Promise<void> =>
+                        this.handleCommandInteraction(interaction)
+                );
+            }
+        });
     }
 
-    public async start(): Promise<void> {
+    private registerEvents(): void {
         for (const folder of this.eventFolders) {
             const fm = new FileManager();
             const name: string = folder.name;
@@ -77,13 +90,7 @@ export default class EventHandler {
                 this.client.on(String(name), eventHandler);
             }
         }
-
-        if (!this.client.isReady()) await once(this.client, 'clientReady');
-        await this.commandManager.registerCommands();
-
-        if (this.useDefaultCommandInteractionHandler) this.client.on('interactionCreate', (interaction: Interaction): Promise<void> => this.handleCommandInteraction(interaction));
     }
-
 
     private async handleCommandInteraction(interaction: Interaction): Promise<void> {
         if (!interaction.isChatInputCommand()) return;

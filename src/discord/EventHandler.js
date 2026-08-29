@@ -8,7 +8,6 @@ const CommandManager_1 = __importDefault(require("./CommandManager"));
 const path_1 = require("path");
 const fs_1 = require("fs");
 const url_1 = require("url");
-const events_1 = require("events");
 class EventHandler {
     dir;
     client;
@@ -24,7 +23,8 @@ class EventHandler {
         this.logger = options.logger;
         this.devs = options.devs ?? [];
         this.testServer = options.testServer;
-        this.useDefaultCommandInteractionHandler = options.useDefaultCommandInteractionHandler ?? true;
+        this.useDefaultCommandInteractionHandler =
+            options.useDefaultCommandInteractionHandler ?? true;
         this.commandManager = new CommandManager_1.default({
             dir: options.commandsDir ?? options.dir,
             client: this.client,
@@ -37,8 +37,15 @@ class EventHandler {
         }
         const fm = new FileManager_1.default();
         this.eventFolders = fm.get(this.dir, true);
+        this.registerEvents();
+        this.client.once('clientReady', async () => {
+            await this.commandManager.registerCommands();
+            if (this.useDefaultCommandInteractionHandler) {
+                this.client.on('interactionCreate', (interaction) => this.handleCommandInteraction(interaction));
+            }
+        });
     }
-    async start() {
+    registerEvents() {
         for (const folder of this.eventFolders) {
             const fm = new FileManager_1.default();
             const name = folder.name;
@@ -56,11 +63,6 @@ class EventHandler {
                 this.client.on(String(name), eventHandler);
             }
         }
-        if (!this.client.isReady())
-            await (0, events_1.once)(this.client, 'clientReady');
-        await this.commandManager.registerCommands();
-        if (this.useDefaultCommandInteractionHandler)
-            this.client.on('interactionCreate', (interaction) => this.handleCommandInteraction(interaction));
     }
     async handleCommandInteraction(interaction) {
         if (!interaction.isChatInputCommand())
