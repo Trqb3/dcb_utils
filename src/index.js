@@ -3,10 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Logger = exports.FileManager = exports.Time = exports.Events = exports.ErrorCodes = exports.DcbRangeError = exports.DcbTypeError = exports.DcbError = exports.EventHandler = exports.CommandManager = exports.Database = void 0;
-// Database
-const Database_1 = __importDefault(require("./database/Database"));
-exports.Database = Database_1.default;
+exports.Logger = exports.FileManager = exports.Database = exports.Time = exports.Events = exports.ErrorCodes = exports.DcbRangeError = exports.DcbTypeError = exports.DcbError = exports.EventHandler = exports.CommandManager = void 0;
 // Discord
 const CommandManager_1 = __importDefault(require("./discord/CommandManager"));
 exports.CommandManager = CommandManager_1.default;
@@ -24,6 +21,8 @@ exports.Events = Events_1.default;
 const Time_1 = __importDefault(require("./skyblock/Time"));
 exports.Time = Time_1.default;
 // Util
+const Database_1 = __importDefault(require("./util/Database"));
+exports.Database = Database_1.default;
 const FileManager_1 = __importDefault(require("./util/FileManager"));
 exports.FileManager = FileManager_1.default;
 const Logger_1 = __importDefault(require("./util/Logger"));
