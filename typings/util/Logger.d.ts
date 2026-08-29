@@ -1,15 +1,15 @@
+/**
+ * Creates a new instance of the Logger class.
+ * @param dir The directory to store the log files.
+ * @example
+ * const logger = new Logger('./logs');
+ * */
 export default class Logger<Ready extends boolean = boolean> {
     dir: string;
     levels: Map<number, string>;
     _ready: Ready;
     private filePath;
     private currentDate;
-    /**
-     * Creates a new instance of the Logger class.
-     * @param dir The directory to store the log files.
-     * @example
-     * const logger = new Logger('./logs');
-     * */
     constructor(dir: string);
     /**
      * Basic request to check if the database connection is ready.

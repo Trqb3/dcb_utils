@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateEnv = exports.Logger = exports.FileManager = exports.Database = exports.SkyBlockTime = exports.SkyBlockEvents = exports.DcbErrorMessages = exports.DcbErrorCodes = exports.DcbRangeError = exports.DcbTypeError = exports.DcbError = exports.EventHandler = void 0;
+exports.validateEnv = exports.Logger = exports.Database = exports.SkyBlockTime = exports.SkyBlockEvents = exports.DcbErrorMessages = exports.DcbErrorCodes = exports.DcbRangeError = exports.DcbTypeError = exports.DcbError = exports.EventHandler = void 0;
 // Discord
 var EventHandler_1 = require("./discord/EventHandler");
 Object.defineProperty(exports, "EventHandler", { enumerable: true, get: function () { return __importDefault(EventHandler_1).default; } });
@@ -22,8 +22,6 @@ Object.defineProperty(exports, "SkyBlockTime", { enumerable: true, get: function
 // Util
 var Database_1 = require("./util/Database");
 Object.defineProperty(exports, "Database", { enumerable: true, get: function () { return __importDefault(Database_1).default; } });
-var FileManager_1 = require("./util/FileManager");
-Object.defineProperty(exports, "FileManager", { enumerable: true, get: function () { return __importDefault(FileManager_1).default; } });
 var Logger_1 = require("./util/Logger");
 Object.defineProperty(exports, "Logger", { enumerable: true, get: function () { return __importDefault(Logger_1).default; } });
 var Env_1 = require("./util/Env");

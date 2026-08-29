@@ -2,18 +2,18 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = require("fs");
 const path_1 = require("path");
+/**
+ * Creates a new instance of the Logger class.
+ * @param dir The directory to store the log files.
+ * @example
+ * const logger = new Logger('./logs');
+ * */
 class Logger {
     dir;
     levels;
     _ready;
     filePath;
     currentDate;
-    /**
-     * Creates a new instance of the Logger class.
-     * @param dir The directory to store the log files.
-     * @example
-     * const logger = new Logger('./logs');
-     * */
     constructor(dir) {
         this.dir = dir;
         this.levels = new Map().set(0, 'INFO').set(1, 'WARN').set(2, 'ERROR').set(3, 'DEBUG');

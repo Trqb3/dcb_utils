@@ -5,6 +5,5 @@ export { DcbError, DcbTypeError, DcbRangeError, DcbErrorCodes, DcbErrorMessages 
 export { default as SkyBlockEvents } from "./skyblock/Events";
 export { default as SkyBlockTime } from "./skyblock/Time";
 export { default as Database } from "./util/Database";
-export { default as FileManager } from "./util/FileManager";
 export { default as Logger } from "./util/Logger";
 export { validateEnv } from "./util/Env";

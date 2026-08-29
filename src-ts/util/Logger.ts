@@ -1,6 +1,12 @@
 import { existsSync, mkdirSync, appendFileSync, openSync, fsyncSync, closeSync } from 'fs';
 import { join } from 'path';
 
+/**
+ * Creates a new instance of the Logger class.
+ * @param dir The directory to store the log files.
+ * @example
+ * const logger = new Logger('./logs');
+ * */
 export default class Logger<Ready extends boolean = boolean> {
     public dir: string;
     public levels: Map<number, string>;
@@ -8,12 +14,6 @@ export default class Logger<Ready extends boolean = boolean> {
     private filePath: string;
     private currentDate: string;
 
-    /**
-     * Creates a new instance of the Logger class.
-     * @param dir The directory to store the log files.
-     * @example
-     * const logger = new Logger('./logs');
-     * */
     constructor(dir: string) {
         this.dir = dir;
         this.levels = new Map().set(0, 'INFO').set(1, 'WARN').set(2, 'ERROR').set(3, 'DEBUG');
