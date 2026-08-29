@@ -1,27 +1,17 @@
 // Discord
-import EventHandler from './discord/EventHandler';
-import { EventOptions, Command } from './discord/EventHandler';
-
-export { EventHandler, EventOptions, Command };
-
+export { default as EventHandler } from './discord/EventHandler';
+export type { EventOptions } from './discord/EventHandler';
+export type { Command } from './discord/CommandManager';
 
 // Errors
-import { DcbError, DcbTypeError, DcbRangeError, ErrorCodes } from "./errors/DcbError";
+export { DcbError, DcbTypeError, DcbRangeError, DcbErrorCodes, DcbErrorMessages } from "./errors/DcbError";
 
-export { DcbError, DcbTypeError, DcbRangeError, ErrorCodes };
-
-
-// Skyblock
-import Events from "./skyblock/Events";
-import Time from "./skyblock/Time";
-
-export { Events, Time };
-
+// SkyBlock
+export { default as Events } from "./skyblock/Events";
+export { default as Time } from "./skyblock/Time";
 
 // Util
-import Database from "./util/Database";
-import FileManager from "./util/FileManager";
-import Logger from "./util/Logger";
-import { validateEnv } from "./util/Env";
-
-export { Database, FileManager, Logger, validateEnv };
+export { default as Database } from "./util/Database";
+export { default as FileManager } from "./util/FileManager";
+export { default as Logger } from "./util/Logger";
+export { validateEnv } from "./util/Env";

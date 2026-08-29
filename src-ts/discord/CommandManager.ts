@@ -1,15 +1,18 @@
 import {
     Client,
     Guild,
+    GuildApplicationCommandManager,
+    ChatInputCommandInteraction,
+    PermissionResolvable,
     ApplicationCommand,
     ApplicationCommandData,
     ApplicationCommandManager,
-    GuildApplicationCommandManager
+    ApplicationCommandOptionData
 } from "discord.js";
 import path, { join } from "path";
 import FileManager from "../util/FileManager";
 import Logger from "../util/Logger";
-import { existsSync, mkdirSync } from "fs";
+import { existsSync, mkdirSync, Dirent } from "fs";
 
 
 export interface CommandManagerOptions {
@@ -18,6 +21,42 @@ export interface CommandManagerOptions {
     logger: Logger;
     exceptions?: string[];
 }
+
+export interface Command {
+    callback: (interaction: ChatInputCommandInteraction, client: Client, logger: Logger) => Promise<void>;
+    name: string;
+    description: string;
+    options?: ApplicationCommandOptionData[];
+    devOnly?: boolean;
+    testOnly?: boolean;
+    permissionsRequired?: PermissionResolvable[];
+    botPermissions?: PermissionResolvable[];
+    deleted?: boolean;
+}
+
+interface CommandChoice {
+    name: string;
+    value: string | number;
+}
+
+interface CommandOption {
+    name: string;
+    description?: string;
+    type: number;
+    required?: boolean;
+    choices?: CommandChoice[];
+}
+
+interface CommandChoices {
+    application: CommandChoice[];
+    local: CommandChoice[];
+}
+
+interface CommandOptions {
+    application: CommandOption[];
+    local: CommandOption[];
+}
+
 
 export default class CommandManager {
     public dir: string;
@@ -52,19 +91,23 @@ export default class CommandManager {
         this.fetchLocalCommands();
     }
 
+    /**
+     * Fetches all local commands from the specified directory and stores them in the commands map.
+     * @returns {void}
+     * */
     private fetchLocalCommands(): void {
         const fm = new FileManager();
-        const cmdCats = fm.get(this.dir, true);
+        const cmdCats: Dirent[] = fm.get(this.dir, true);
 
         for (const cat of cmdCats) {
             const catName: string = cat.name;
             const catPath: string = join(this.dir, catName);
-            const files = fm.get(catPath, true);
+            const files: Dirent[] = fm.get(catPath, true);
 
             for (const file of files) {
                 const fileName: string = file.name;
                 const filePath: string = join(catPath, fileName);
-                const command = require(filePath);
+                const command: Command = require(filePath).default;
 
                 if (this.exceptions?.includes(command.name)) continue;
 
@@ -73,6 +116,11 @@ export default class CommandManager {
         }
     }
 
+    /**
+     * Fetches all application commands from the specified guild or the application itself.
+     * @param guildId - The ID of the guild to fetch commands for, or undefined to fetch application-wide commands.
+     * @returns {Promise<ApplicationCommandManager | GuildApplicationCommandManager>} A promise resolving to the application command manager.
+     * */
     private async fetchApplicationCommands(guildId?: string): Promise<ApplicationCommandManager | GuildApplicationCommandManager> {
         if (guildId) {
             const guild: Guild = await this.client.guilds.fetch(guildId);
@@ -85,11 +133,17 @@ export default class CommandManager {
         return applicationCommands;
     }
 
+    /**
+     * Checks if two commands are different.
+     * @param existingCommand - The existing command.
+     * @param localCommand - The local command.
+     * @returns {boolean} True if the commands are different, false otherwise.
+     */
     private areCommandsDifferent(existingCommand: any, localCommand: any): boolean {
-        const areChoicesDifferent = (existingChoices: any[], localChoices: any[]): boolean => {
-            for (const localChoice of localChoices) {
-                const existingChoice = existingChoices?.find(
-                    (choice): boolean => choice.name === localChoice.name
+        const areChoicesDifferent: (choices: CommandChoices) => boolean = (choices: CommandChoices): boolean => {
+            for (const localChoice of choices.local) {
+                const existingChoice: CommandChoice | undefined = choices.application?.find(
+                    (choice: CommandChoice): boolean => choice.name === localChoice.name
                 );
 
                 if (!existingChoice) return true;
@@ -98,10 +152,10 @@ export default class CommandManager {
             return false;
         };
 
-        const areOptionsDifferent = (existingOptions: any[], localOptions: any[]): boolean => {
-            for (const localOption of localOptions) {
-                const existingOption = existingOptions?.find(
-                    (option): boolean => option.name === localOption.name
+        const areOptionsDifferent: (options: CommandOptions) => boolean = (options: CommandOptions): boolean => {
+            for (const localOption of options.local) {
+                const existingOption: CommandOption | undefined = options.application?.find(
+                    (option: CommandOption): boolean => option.name === localOption.name
                 );
 
                 if (!existingOption) return true;
@@ -111,10 +165,10 @@ export default class CommandManager {
                     localOption.type !== existingOption.type ||
                     localOption.required !== existingOption.required ||
                     (localOption.choices?.length || 0) !== (existingOption.choices?.length || 0) ||
-                    areChoicesDifferent(
-                        localOption.choices || [],
-                        existingOption.choices || []
-                    )
+                    areChoicesDifferent({
+                        local: localOption.choices || [],
+                        application: existingOption.choices || []
+                    })
                 ) {
                     return true;
                 }
@@ -122,15 +176,12 @@ export default class CommandManager {
             return false;
         };
 
-        if (
-            existingCommand.description !== localCommand.description ||
+        return existingCommand.description !== localCommand.description ||
             existingCommand.options?.length !== (localCommand.options?.length || 0) ||
-            areOptionsDifferent(existingCommand.options, localCommand.options || [])
-        ) {
-            return true;
-        }
-
-        return false;
+            areOptionsDifferent({
+                application: existingCommand.options,
+                local: localCommand.options || []
+            });
     }
 
     /**
@@ -146,7 +197,7 @@ export default class CommandManager {
                 try {
                     const { description, options } = localCommand;
 
-                    const existingCommand = applicationCommands.cache.find(
+                    const existingCommand: ApplicationCommand | undefined = applicationCommands.cache.find(
                         (cmd: ApplicationCommand): boolean => cmd.name === name
                     );
 

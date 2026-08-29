@@ -64,6 +64,10 @@ class CommandManager {
         };
         this.fetchLocalCommands();
     }
+    /**
+     * Fetches all local commands from the specified directory and stores them in the commands map.
+     * @returns {void}
+     * */
     fetchLocalCommands() {
         const fm = new FileManager_1.default();
         const cmdCats = fm.get(this.dir, true);
@@ -74,13 +78,18 @@ class CommandManager {
             for (const file of files) {
                 const fileName = file.name;
                 const filePath = (0, path_1.join)(catPath, fileName);
-                const command = require(filePath);
+                const command = require(filePath).default;
                 if (this.exceptions?.includes(command.name))
                     continue;
                 this.commands.local.set(command.name, command);
             }
         }
     }
+    /**
+     * Fetches all application commands from the specified guild or the application itself.
+     * @param guildId - The ID of the guild to fetch commands for, or undefined to fetch application-wide commands.
+     * @returns {Promise<ApplicationCommandManager | GuildApplicationCommandManager>} A promise resolving to the application command manager.
+     * */
     async fetchApplicationCommands(guildId) {
         if (guildId) {
             const guild = await this.client.guilds.fetch(guildId);
@@ -91,10 +100,16 @@ class CommandManager {
         await applicationCommands.fetch();
         return applicationCommands;
     }
+    /**
+     * Checks if two commands are different.
+     * @param existingCommand - The existing command.
+     * @param localCommand - The local command.
+     * @returns {boolean} True if the commands are different, false otherwise.
+     */
     areCommandsDifferent(existingCommand, localCommand) {
-        const areChoicesDifferent = (existingChoices, localChoices) => {
-            for (const localChoice of localChoices) {
-                const existingChoice = existingChoices?.find((choice) => choice.name === localChoice.name);
+        const areChoicesDifferent = (choices) => {
+            for (const localChoice of choices.local) {
+                const existingChoice = choices.application?.find((choice) => choice.name === localChoice.name);
                 if (!existingChoice)
                     return true;
                 if (localChoice.value !== existingChoice.value)
@@ -102,27 +117,30 @@ class CommandManager {
             }
             return false;
         };
-        const areOptionsDifferent = (existingOptions, localOptions) => {
-            for (const localOption of localOptions) {
-                const existingOption = existingOptions?.find((option) => option.name === localOption.name);
+        const areOptionsDifferent = (options) => {
+            for (const localOption of options.local) {
+                const existingOption = options.application?.find((option) => option.name === localOption.name);
                 if (!existingOption)
                     return true;
                 if (localOption.description !== existingOption.description ||
                     localOption.type !== existingOption.type ||
                     localOption.required !== existingOption.required ||
                     (localOption.choices?.length || 0) !== (existingOption.choices?.length || 0) ||
-                    areChoicesDifferent(localOption.choices || [], existingOption.choices || [])) {
+                    areChoicesDifferent({
+                        local: localOption.choices || [],
+                        application: existingOption.choices || []
+                    })) {
                     return true;
                 }
             }
             return false;
         };
-        if (existingCommand.description !== localCommand.description ||
+        return existingCommand.description !== localCommand.description ||
             existingCommand.options?.length !== (localCommand.options?.length || 0) ||
-            areOptionsDifferent(existingCommand.options, localCommand.options || [])) {
-            return true;
-        }
-        return false;
+            areOptionsDifferent({
+                application: existingCommand.options,
+                local: localCommand.options || []
+            });
     }
     /**
      * Register commands. If GuildId is provided, commands will be registered for that guild only. Otherwise, commands will be registered globally.

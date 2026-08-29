@@ -15,7 +15,7 @@ class EventHandler {
     commandManager;
     devs;
     testServer;
-    useDefaultInteractionHandler;
+    useDefaultCommandInteractionHandler;
     eventFolders;
     constructor(options) {
         this.dir = (0, path_1.join)(options.dir, 'events');
@@ -23,7 +23,7 @@ class EventHandler {
         this.logger = options.logger;
         this.devs = options.devs ?? [];
         this.testServer = options.testServer;
-        this.useDefaultInteractionHandler = options.useDefaultInteractionHandler ?? true;
+        this.useDefaultCommandInteractionHandler = options.useDefaultCommandInteractionHandler ?? true;
         this.commandManager = new CommandManager_1.default({
             dir: options.commandsDir ?? options.dir,
             client: this.client,
@@ -56,10 +56,10 @@ class EventHandler {
                 this.client.on(String(name), eventHandler);
             }
         }
-        if (this.useDefaultInteractionHandler)
-            this.client.on('interactionCreate', (interaction) => this.handleInteraction(interaction));
+        if (this.useDefaultCommandInteractionHandler)
+            this.client.on('interactionCreate', (interaction) => this.handleCommandInteraction(interaction));
     }
-    async handleInteraction(interaction) {
+    async handleCommandInteraction(interaction) {
         if (!interaction.isChatInputCommand())
             return;
         const command = this.commandManager.commands.local.get(interaction.commandName);
@@ -86,6 +86,8 @@ class EventHandler {
             }
             if (command.botPermissions?.length) {
                 const bot = interaction.guild?.members.me;
+                if (!bot)
+                    return;
                 for (const permission of command.botPermissions) {
                     if (!bot?.permissions.has(permission)) {
                         await interaction.reply({ content: 'I do not have the required permissions to execute this command.', ephemeral: true });

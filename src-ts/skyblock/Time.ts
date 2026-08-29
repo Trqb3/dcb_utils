@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { DcbError, DcbTypeError, ErrorCodes } from '../errors/DcbError';
+import { DcbError, DcbTypeError, DcbErrorCodes } from '../errors/DcbError';
 
 export enum SkyblockMonths {
     EarlySpring = 1,
@@ -70,7 +70,7 @@ export default class Time extends EventEmitter {
      * @see Time
      * */
     public get(date: Date): SkyblockTime {
-        if (!date) throw new DcbError(ErrorCodes.MissingArgument, 'date');
+        if (!date) throw new DcbError(DcbErrorCodes.MissingArgument, 'date');
 
         const poch: number = date.getTime() - this.SB_EPOCH;
         const sbYear: number = Math.floor(poch / 446400000) + 1;
@@ -130,10 +130,10 @@ export default class Time extends EventEmitter {
      * @see Time.get
      * */
     public on(eventName: string, listener: (arg: SkyblockTime) => void): this {
-        if (!eventName) throw new DcbError(ErrorCodes.MissingArgument, 'eventName');
-        if (typeof eventName !== 'string') throw new DcbTypeError(ErrorCodes.InvalidType, 'eventName', 'string');
+        if (!eventName) throw new DcbError(DcbErrorCodes.MissingArgument, 'eventName');
+        if (typeof eventName !== 'string') throw new DcbTypeError(DcbErrorCodes.InvalidType, 'eventName', 'string');
 
-        if (!listener) throw new DcbError(ErrorCodes.MissingArgument, 'listener');
+        if (!listener) throw new DcbError(DcbErrorCodes.MissingArgument, 'listener');
 
         super.on(eventName, listener);
         if (eventName === 'change' && this.listenerCount('change') === 1) {
@@ -179,8 +179,8 @@ export default class Time extends EventEmitter {
      * @returns The recalculated SkyblockTime.
      * */
     public recalculate(sbTime: SkyblockTime, sbMinutes: number, negative = false): SkyblockTime {
-        if (!sbTime) throw new DcbError(ErrorCodes.MissingArgument, 'sbTime');
-        if (typeof sbTime !== 'object') throw new DcbTypeError(ErrorCodes.InvalidType, 'sbTime', 'object');
+        if (!sbTime) throw new DcbError(DcbErrorCodes.MissingArgument, 'sbTime');
+        if (typeof sbTime !== 'object') throw new DcbTypeError(DcbErrorCodes.InvalidType, 'sbTime', 'object');
 
         const totalMinutes: number = sbTime.hour * 60 + sbTime.minute + (negative ? -sbMinutes : sbMinutes);
 

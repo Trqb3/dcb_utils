@@ -1,7 +1,8 @@
-import { Client, ClientEvents, Interaction, ChatInputCommandInteraction, ApplicationCommandOptionData, PermissionResolvable } from 'discord.js';
+import { Client, ClientEvents, Interaction, GuildMember } from 'discord.js';
 import Logger from '../util/Logger';
 import FileManager from '../util/FileManager';
 import CommandManager from "./CommandManager";
+import { Command } from "./CommandManager";
 import { join } from 'path';
 import { existsSync, mkdirSync, Dirent } from 'fs';
 import { pathToFileURL } from "url";
@@ -12,22 +13,11 @@ export interface EventOptions {
     logger: Logger;
     commandsDir?: string;
     commandExceptions?: string[];
-    useDefaultInteractionHandler?: boolean;
+    useDefaultCommandInteractionHandler?: boolean;
     devs?: string[];
     testServer?: string;
 }
 
-export interface Command {
-    callback: (interaction: ChatInputCommandInteraction, client: Client, logger: Logger) => Promise<void>;
-    name: string;
-    description: string;
-    options?: ApplicationCommandOptionData[];
-    devOnly?: boolean;
-    testOnly?: boolean;
-    permissionsRequired?: PermissionResolvable[];
-    botPermissions?: PermissionResolvable[];
-    deleted?: boolean;
-}
 
 export default class EventHandler {
     public dir: string;
@@ -36,7 +26,7 @@ export default class EventHandler {
     public commandManager: CommandManager;
     public devs: string[];
     public testServer?: string;
-    public readonly useDefaultInteractionHandler: boolean;
+    public readonly useDefaultCommandInteractionHandler: boolean;
     private readonly eventFolders: Dirent[];
 
     constructor(options: EventOptions) {
@@ -45,7 +35,7 @@ export default class EventHandler {
         this.logger = options.logger;
         this.devs = options.devs ?? [];
         this.testServer = options.testServer;
-        this.useDefaultInteractionHandler = options.useDefaultInteractionHandler ?? true;
+        this.useDefaultCommandInteractionHandler = options.useDefaultCommandInteractionHandler ?? true;
 
         this.commandManager = new CommandManager(
             {
@@ -89,11 +79,11 @@ export default class EventHandler {
             }
         }
 
-        if (this.useDefaultInteractionHandler) this.client.on('interactionCreate', (interaction: Interaction): Promise<void> => this.handleInteraction(interaction));
+        if (this.useDefaultCommandInteractionHandler) this.client.on('interactionCreate', (interaction: Interaction): Promise<void> => this.handleCommandInteraction(interaction));
     }
 
 
-    private async handleInteraction(interaction: Interaction): Promise<void> {
+    private async handleCommandInteraction(interaction: Interaction): Promise<void> {
         if (!interaction.isChatInputCommand()) return;
 
         const command: Command = this.commandManager.commands.local.get(interaction.commandName);
@@ -124,7 +114,9 @@ export default class EventHandler {
             }
 
             if (command.botPermissions?.length) {
-                const bot = interaction.guild?.members.me;
+                const bot: GuildMember | null | undefined = interaction.guild?.members.me;
+
+                if (!bot) return;
 
                 for (const permission of command.botPermissions) {
                     if (!bot?.permissions.has(permission)) {

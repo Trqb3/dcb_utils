@@ -1,13 +1,4 @@
-/**
- * The error codes for DcbError.
- * */
-export declare enum ErrorCodes {
-    InvalidType = "InvalidType",
-    MissingArgument = "MissingArgument",
-    MissingEnv = "MissingEnv",
-    NotReady = "NotReady",
-    FailedCall = "FailedCall"
-}
+import { ErrorCodes } from "./ErrorCodes";
 declare const DcbError_base: {
     new (code: ErrorCodes, ...args: any[]): {
         code: string;
@@ -50,4 +41,5 @@ declare const DcbRangeError_base: {
 };
 export declare class DcbRangeError extends DcbRangeError_base {
 }
-export {};
+export { ErrorCodes as DcbErrorCodes } from "./ErrorCodes";
+export { ErrorMessages as DcbErrorMessages } from "./ErrorMessages";

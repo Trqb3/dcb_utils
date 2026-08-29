@@ -56,7 +56,7 @@ class Time extends events_1.EventEmitter {
      * */
     get(date) {
         if (!date)
-            throw new DcbError_1.DcbError(DcbError_1.ErrorCodes.MissingArgument, 'date');
+            throw new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.MissingArgument, 'date');
         const poch = date.getTime() - this.SB_EPOCH;
         const sbYear = Math.floor(poch / 446400000) + 1;
         const sbMonth = Math.floor(poch / 37200000) % 12;
@@ -109,11 +109,11 @@ class Time extends events_1.EventEmitter {
      * */
     on(eventName, listener) {
         if (!eventName)
-            throw new DcbError_1.DcbError(DcbError_1.ErrorCodes.MissingArgument, 'eventName');
+            throw new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.MissingArgument, 'eventName');
         if (typeof eventName !== 'string')
-            throw new DcbError_1.DcbTypeError(DcbError_1.ErrorCodes.InvalidType, 'eventName', 'string');
+            throw new DcbError_1.DcbTypeError(DcbError_1.DcbErrorCodes.InvalidType, 'eventName', 'string');
         if (!listener)
-            throw new DcbError_1.DcbError(DcbError_1.ErrorCodes.MissingArgument, 'listener');
+            throw new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.MissingArgument, 'listener');
         super.on(eventName, listener);
         if (eventName === 'change' && this.listenerCount('change') === 1) {
             this.scheduleNextChange();
@@ -153,9 +153,9 @@ class Time extends events_1.EventEmitter {
      * */
     recalculate(sbTime, sbMinutes, negative = false) {
         if (!sbTime)
-            throw new DcbError_1.DcbError(DcbError_1.ErrorCodes.MissingArgument, 'sbTime');
+            throw new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.MissingArgument, 'sbTime');
         if (typeof sbTime !== 'object')
-            throw new DcbError_1.DcbTypeError(DcbError_1.ErrorCodes.InvalidType, 'sbTime', 'object');
+            throw new DcbError_1.DcbTypeError(DcbError_1.DcbErrorCodes.InvalidType, 'sbTime', 'object');
         const totalMinutes = sbTime.hour * 60 + sbTime.minute + (negative ? -sbMinutes : sbMinutes);
         sbTime.hour = Math.floor((totalMinutes / 60) % 24);
         sbTime.minute = (totalMinutes % 60 + 60) % 60;

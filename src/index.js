@@ -3,27 +3,28 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateEnv = exports.Logger = exports.FileManager = exports.Database = exports.Time = exports.Events = exports.ErrorCodes = exports.DcbRangeError = exports.DcbTypeError = exports.DcbError = exports.EventHandler = void 0;
+exports.validateEnv = exports.Logger = exports.FileManager = exports.Database = exports.Time = exports.Events = exports.DcbErrorMessages = exports.DcbErrorCodes = exports.DcbRangeError = exports.DcbTypeError = exports.DcbError = exports.EventHandler = void 0;
 // Discord
-const EventHandler_1 = __importDefault(require("./discord/EventHandler"));
-exports.EventHandler = EventHandler_1.default;
+var EventHandler_1 = require("./discord/EventHandler");
+Object.defineProperty(exports, "EventHandler", { enumerable: true, get: function () { return __importDefault(EventHandler_1).default; } });
 // Errors
-const DcbError_1 = require("./errors/DcbError");
+var DcbError_1 = require("./errors/DcbError");
 Object.defineProperty(exports, "DcbError", { enumerable: true, get: function () { return DcbError_1.DcbError; } });
 Object.defineProperty(exports, "DcbTypeError", { enumerable: true, get: function () { return DcbError_1.DcbTypeError; } });
 Object.defineProperty(exports, "DcbRangeError", { enumerable: true, get: function () { return DcbError_1.DcbRangeError; } });
-Object.defineProperty(exports, "ErrorCodes", { enumerable: true, get: function () { return DcbError_1.ErrorCodes; } });
-// Skyblock
-const Events_1 = __importDefault(require("./skyblock/Events"));
-exports.Events = Events_1.default;
-const Time_1 = __importDefault(require("./skyblock/Time"));
-exports.Time = Time_1.default;
+Object.defineProperty(exports, "DcbErrorCodes", { enumerable: true, get: function () { return DcbError_1.DcbErrorCodes; } });
+Object.defineProperty(exports, "DcbErrorMessages", { enumerable: true, get: function () { return DcbError_1.DcbErrorMessages; } });
+// SkyBlock
+var Events_1 = require("./skyblock/Events");
+Object.defineProperty(exports, "Events", { enumerable: true, get: function () { return __importDefault(Events_1).default; } });
+var Time_1 = require("./skyblock/Time");
+Object.defineProperty(exports, "Time", { enumerable: true, get: function () { return __importDefault(Time_1).default; } });
 // Util
-const Database_1 = __importDefault(require("./util/Database"));
-exports.Database = Database_1.default;
-const FileManager_1 = __importDefault(require("./util/FileManager"));
-exports.FileManager = FileManager_1.default;
-const Logger_1 = __importDefault(require("./util/Logger"));
-exports.Logger = Logger_1.default;
-const Env_1 = require("./util/Env");
+var Database_1 = require("./util/Database");
+Object.defineProperty(exports, "Database", { enumerable: true, get: function () { return __importDefault(Database_1).default; } });
+var FileManager_1 = require("./util/FileManager");
+Object.defineProperty(exports, "FileManager", { enumerable: true, get: function () { return __importDefault(FileManager_1).default; } });
+var Logger_1 = require("./util/Logger");
+Object.defineProperty(exports, "Logger", { enumerable: true, get: function () { return __importDefault(Logger_1).default; } });
+var Env_1 = require("./util/Env");
 Object.defineProperty(exports, "validateEnv", { enumerable: true, get: function () { return Env_1.validateEnv; } });

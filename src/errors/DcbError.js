@@ -3,8 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DcbRangeError = exports.DcbTypeError = exports.DcbError = exports.ErrorCodes = void 0;
+exports.DcbErrorMessages = exports.DcbErrorCodes = exports.DcbRangeError = exports.DcbTypeError = exports.DcbError = void 0;
 const node_util_1 = __importDefault(require("node:util"));
+const ErrorCodes_1 = require("./ErrorCodes");
+const ErrorMessages_1 = require("./ErrorMessages");
 /**
  * Extends an error class to include a code property and a custom message.
  * @param Base The base error class to extend.
@@ -31,9 +33,9 @@ function makeDcbError(Base) {
  * @returns The formatted message.
  * */
 function message(code, args) {
-    if (!(code in ErrorCodes))
+    if (!(code in ErrorCodes_1.ErrorCodes))
         throw new Error('Error code must be a valid DcbErrorCodes');
-    const msg = Messages[code];
+    const msg = ErrorMessages_1.ErrorMessages[code];
     if (!msg)
         throw new Error(`No message associated with error code: ${code}.`);
     if (!args?.length)
@@ -41,27 +43,6 @@ function message(code, args) {
     args.unshift(msg);
     return node_util_1.default.format(...args);
 }
-/**
- * The error codes for DcbError.
- * */
-var ErrorCodes;
-(function (ErrorCodes) {
-    ErrorCodes["InvalidType"] = "InvalidType";
-    ErrorCodes["MissingArgument"] = "MissingArgument";
-    ErrorCodes["MissingEnv"] = "MissingEnv";
-    ErrorCodes["NotReady"] = "NotReady";
-    ErrorCodes["FailedCall"] = "FailedCall";
-})(ErrorCodes || (exports.ErrorCodes = ErrorCodes = {}));
-/**
- * The messages for the corresponding ErrorCode.
- * */
-const Messages = {
-    [ErrorCodes.InvalidType]: 'Provided type is invalid',
-    [ErrorCodes.MissingArgument]: 'Missing required argument',
-    [ErrorCodes.MissingEnv]: 'Missing required environment variable',
-    [ErrorCodes.NotReady]: 'Not ready',
-    [ErrorCodes.FailedCall]: 'Failed to call function',
-};
 class DcbError extends makeDcbError(Error) {
 }
 exports.DcbError = DcbError;
@@ -71,3 +52,7 @@ exports.DcbTypeError = DcbTypeError;
 class DcbRangeError extends makeDcbError(RangeError) {
 }
 exports.DcbRangeError = DcbRangeError;
+var ErrorCodes_2 = require("./ErrorCodes");
+Object.defineProperty(exports, "DcbErrorCodes", { enumerable: true, get: function () { return ErrorCodes_2.ErrorCodes; } });
+var ErrorMessages_2 = require("./ErrorMessages");
+Object.defineProperty(exports, "DcbErrorMessages", { enumerable: true, get: function () { return ErrorMessages_2.ErrorMessages; } });
