@@ -4,9 +4,21 @@ import FileManager from '../util/FileManager';
 import CommandManager from "./CommandManager";
 import { Command } from "./CommandManager";
 import { join } from 'path';
-import { existsSync, mkdirSync, Dirent } from 'fs';
+import { mkdirSync, Dirent } from 'fs';
 import { pathToFileURL } from "url";
 
+/**
+ * Configuration options for the EventHandler.
+ * @interface EventOptions
+ * @property {string} dir - The directory where the event and command directories will be located.
+ * @property {Client} client - The Discord client instance.
+ * @property {Logger} logger - The logger instance for logging events and errors.
+ * @property {string} [commandsDir] - Optional directory for command files.
+ * @property {string[]} [commandExceptions] - Optional list of command exceptions.
+ * @property {boolean} [useDefaultCommandInteractionHandler=true] - Whether to use the default command interaction handler.
+ * @property {string[]} [devs] - Optional list of developer IDs for dev-only commands.
+ * @property {string} [testServer] - Optional test server ID for test-only commands.
+ */
 export interface EventOptions {
     dir: string;
     client: Client;
@@ -19,6 +31,11 @@ export interface EventOptions {
 }
 
 
+/**
+ * Constructs an EventHandler instance that manages Discord events and command interactions.
+ * @param {EventOptions} options - Configuration options for the EventHandler.
+ * @constructor
+ */
 export default class EventHandler {
     public dir: string;
     public client: Client;

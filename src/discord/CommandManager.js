@@ -6,16 +6,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = require("path");
 const FileManager_1 = __importDefault(require("../util/FileManager"));
 const fs_1 = require("fs");
+/**
+ * Main class for handling commands within a discord bot
+ * @param options - The options for the command manager
+ */
 class CommandManager {
     dir;
     client;
     logger;
     exceptions;
     commands;
-    /**
-     * Main class for handling commands within a discord bot
-     * @param options - The options for the command manager
-     */
     constructor(options) {
         this.dir = (0, path_1.join)(options.dir, 'commands');
         this.client = options.client;

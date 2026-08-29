@@ -9,6 +9,11 @@ const CommandManager_1 = __importDefault(require("./CommandManager"));
 const path_1 = require("path");
 const fs_1 = require("fs");
 const url_1 = require("url");
+/**
+ * Constructs an EventHandler instance that manages Discord events and command interactions.
+ * @param {EventOptions} options - Configuration options for the EventHandler.
+ * @constructor
+ */
 class EventHandler {
     dir;
     client;

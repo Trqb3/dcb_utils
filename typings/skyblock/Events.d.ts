@@ -12,12 +12,12 @@ export interface EventConfig {
     hour?: number;
     minute?: number;
 }
+/**
+ * Creates a new instance of Events.
+ * @param config The configuration for the event.
+ * */
 export default class Events {
     config: EventConfig;
-    /**
-     * Creates a new instance of Events.
-     * @param config The configuration for the event.
-     * */
     constructor(config: EventConfig);
     /**
      * Checks if the event should be triggered at the given time.

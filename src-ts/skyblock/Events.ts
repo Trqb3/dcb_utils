@@ -14,13 +14,13 @@ export interface EventConfig {
     minute?: number;
 }
 
+/**
+ * Creates a new instance of Events.
+ * @param config The configuration for the event.
+ * */
 export default class Events {
     public config: EventConfig;
 
-    /**
-     * Creates a new instance of Events.
-     * @param config The configuration for the event.
-     * */
     constructor(config: EventConfig) {
         this.config = config;
     }

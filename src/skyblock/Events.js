@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * Creates a new instance of Events.
+ * @param config The configuration for the event.
+ * */
 class Events {
     config;
-    /**
-     * Creates a new instance of Events.
-     * @param config The configuration for the event.
-     * */
     constructor(config) {
         this.config = config;
     }

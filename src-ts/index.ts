@@ -7,8 +7,8 @@ export type { Command } from './discord/CommandManager';
 export { DcbError, DcbTypeError, DcbRangeError, DcbErrorCodes, DcbErrorMessages } from "./errors/DcbError";
 
 // SkyBlock
-export { default as Events } from "./skyblock/Events";
-export { default as Time } from "./skyblock/Time";
+export { default as SkyBlockEvents } from "./skyblock/Events";
+export { default as SkyBlockTime } from "./skyblock/Time";
 
 // Util
 export { default as Database } from "./util/Database";
