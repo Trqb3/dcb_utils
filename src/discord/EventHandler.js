@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const FileManager_1 = __importDefault(require("../util/FileManager"));
+const CommandManager_1 = __importDefault(require("./CommandManager"));
 const path_1 = require("path");
 const fs_1 = require("fs");
 const url_1 = require("url");
@@ -11,10 +12,21 @@ class EventHandler {
     dir;
     client;
     logger;
+    commandManager;
+    devs;
+    testServer;
     _eventFolders;
     constructor(options) {
         this.client = options.client;
         this.logger = options.logger;
+        this.devs = options.devs ?? [];
+        this.testServer = options.testServer;
+        this.commandManager = new CommandManager_1.default({
+            dir: options.commandsDir ?? options.dir,
+            client: this.client,
+            logger: this.logger,
+            exceptions: options.commandExceptions
+        });
         this.dir = (0, path_1.join)(options.dir, 'events');
         if (!(0, fs_1.existsSync)(this.dir)) {
             (0, fs_1.mkdirSync)(this.dir);
@@ -32,11 +44,54 @@ class EventHandler {
                 const eventHandler = async (arg) => {
                     for (const file of files) {
                         const { default: eventFunction } = await import((0, url_1.pathToFileURL)((0, path_1.join)(path, file.name)).href);
-                        await (await eventFunction)(arg, this.client, this.logger);
+                        await (await eventFunction)(arg, this.client, this.logger, this.commandManager);
                     }
                 };
                 this.client.on(String(name), eventHandler);
             }
+        }
+        if (options.useDefaultInteractionHandler !== false) {
+            this.client.on('interactionCreate', (interaction) => this.handleInteraction(interaction));
+        }
+    }
+    async handleInteraction(interaction) {
+        if (!interaction.isChatInputCommand())
+            return;
+        const command = this.commandManager.commands.local.get(interaction.commandName);
+        if (!command) {
+            this.logger.write(1, `Unknown command executed: ${interaction.commandName}`);
+            return;
+        }
+        try {
+            if (command.devOnly && !this.devs.includes(interaction.user.id)) {
+                await interaction.reply({ content: 'This command is only available to developers.', ephemeral: true });
+                return;
+            }
+            if (command.testOnly && interaction.guildId !== this.testServer) {
+                await interaction.reply({ content: 'This command is only available in the test server.', ephemeral: true });
+                return;
+            }
+            if (command.permissionsRequired?.length) {
+                for (const permission of command.permissionsRequired) {
+                    if (!interaction.memberPermissions?.has(permission)) {
+                        await interaction.reply({ content: 'You do not have the required permissions to use this command.', ephemeral: true });
+                        return;
+                    }
+                }
+            }
+            if (command.botPermissions?.length) {
+                const bot = interaction.guild?.members.me;
+                for (const permission of command.botPermissions) {
+                    if (!bot?.permissions.has(permission)) {
+                        await interaction.reply({ content: 'I do not have the required permissions to execute this command.', ephemeral: true });
+                        return;
+                    }
+                }
+            }
+            await command.callback(interaction, this.client, this.logger);
+        }
+        catch (error) {
+            this.logger.write(2, `Command execution failed: ${interaction.commandName}`, error);
         }
     }
 }

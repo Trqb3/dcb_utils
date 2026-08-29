@@ -1,6 +1,6 @@
-import CommandManager from './discord/CommandManager';
 import EventHandler from './discord/EventHandler';
-export { CommandManager, EventHandler };
+import { EventOptions, Command } from './discord/EventHandler';
+export { EventHandler, EventOptions, Command };
 import { DcbError, DcbTypeError, DcbRangeError, ErrorCodes } from "./errors/DcbError";
 export { DcbError, DcbTypeError, DcbRangeError, ErrorCodes };
 import Events from "./skyblock/Events";
