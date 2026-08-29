@@ -1,67 +1,80 @@
-'use strict';
-
-const fs = require('fs');
-const path = require('path');
-const DcbError = require("../errors/DcbError");
-const ErrorCodes = require("../errors/ErrorCodes");
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const fs_1 = require("fs");
+const path_1 = require("path");
 class Logger {
+    dir;
+    levels;
+    _ready;
+    filePath;
+    currentDate;
     /**
-     * Erstellt einen neuen Logger
-     * @param {string} dir Ort an welchem die Log-Dateien gespeichert werden sollen
+     * Creates a new instance of the Logger class.
+     * @param dir The directory to store the log files.
+     * @example
+     * const logger = new Logger('./logs');
      * */
     constructor(dir) {
         this.dir = dir;
-        this._filePath = '';
+        this.levels = new Map().set(0, 'INFO').set(1, 'WARN').set(2, 'ERROR').set(3, 'DEBUG');
         this._ready = false;
-
-        this.#init(this.dir);
+        this.filePath = '';
+        this.currentDate = '';
     }
-
     /**
-     * Initialisiert den Logger
-     * @param {string} dir Ort an welchem die Log-Dateien gespeichert werden sollen
-     * @returns {void}
+     * Basic request to check if the database connection is ready.
+     * @returns Whether the database is ready.
      * */
-    #init(dir) {
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-
-        const fileName = `${new Date().toISOString().replace(/:/g,'-')}.log`;
-        this._filePath = path.join(dir, fileName);
-
-        fs.writeFileSync(this._filePath, '');
+    get ready() {
+        return this._ready;
+    }
+    /**
+     * Initializes the logger by creating the log file.
+     * @example
+     * logger.init();
+     * */
+    init() {
+        if (!(0, fs_1.existsSync)(this.dir))
+            (0, fs_1.mkdirSync)(this.dir);
+        this.updateFilePath();
         this._ready = true;
     }
-
+    updateFilePath() {
+        const newDate = new Date().toISOString().split('T')[0];
+        if (this.currentDate !== newDate) {
+            this.currentDate = newDate;
+            const fileName = `${this.currentDate}.log`;
+            this.filePath = (0, path_1.join)(this.dir, fileName);
+            if (!(0, fs_1.existsSync)(this.filePath)) {
+                const fd = (0, fs_1.openSync)(this.filePath, 'w');
+                (0, fs_1.closeSync)(fd);
+            }
+        }
+    }
     /**
-     * Schreibt eine Nachricht in die Logdatei und die Konsole. Funktioniert nur, wenn der Logger bereit ist.
-     * ___
-     * @loglevel 0 = INFO
-     * @loglevel 1 = WARN
-     * @loglevel 2 = ERROR
-     * @loglevel 3 = DEBUG
-     * @param {number} level Log-Level
-     * @param {string} message Nachricht welche geloggt werden soll
-     * @param {string} details Details zur Nachricht
-     * @returns {void}
+     * Append messages to the before created log file.
      * @example
-     * logger.write(0, 'Hello World', 'This is a test');
+     * logger.write(0, 'This is an info message');
      * */
-    write(level, message, details = undefined) {
-        if (!this._ready) throw new DcbError(ErrorCodes.NotReady, 'Logger not ready');
-
+    write(level, message, details) {
+        if (!this._ready)
+            throw new Error('Logger not ready');
         try {
-            const levels = ['INFO', 'WARN', 'ERROR', 'DEBUG'];
+            this.updateFilePath();
             const timestamp = new Date().toISOString();
-            const logLevel = levels[level] || 'UNKNOWN';
-            const logMessage = `${timestamp} - [${logLevel}] - ${message} ${details ? `(${details})` : ''}`;
-
-            fs.appendFileSync(this._filePath, `${logMessage}\n`, 'utf8');
+            const logLevel = this.levels.get(level);
+            if (!logLevel)
+                throw new Error('Invalid log level');
+            const logMessage = `${timestamp} - [${logLevel}] - ${message} ${details ? `- (${details})` : ''}`;
+            const fd = (0, fs_1.openSync)(this.filePath, 'a');
+            (0, fs_1.appendFileSync)(fd, `${logMessage}\n`, 'utf-8');
+            (0, fs_1.fsyncSync)(fd);
+            (0, fs_1.closeSync)(fd);
             console.log(logMessage);
-        } catch (error) {
-            throw new DcbError(ErrorCodes.NotReady, error);
+        }
+        catch (error) {
+            throw error;
         }
     }
 }
-
-module.exports = Logger;
+exports.default = Logger;

@@ -4,9 +4,9 @@ import { Connection, QueryResult, createConnection } from 'mysql2/promise';
  * Options for the Database class.
  * */
 export interface DatabaseOptions {
-    host: string;
-    user: string;
-    port: string | number;
+    host: string | undefined;
+    user: string | undefined;
+    port: string | number | undefined;
 }
 
 /**
@@ -30,8 +30,8 @@ export default class Database<Ready extends boolean = boolean> {
      * });
      * */
     constructor(options: DatabaseOptions) {
-        this.host = options.host;
-        this.user = options.user;
+        this.host = String(options.host);
+        this.user = String(options.user);
         this.port = Number(options.port);
         this._ready = false as Ready;
     }
@@ -53,13 +53,13 @@ export default class Database<Ready extends boolean = boolean> {
      * @see {@link Database.login Database login}
      * @returns Promise<void>
      * */
-    public async login(password: string): Promise<void> {
+    public async login(password: string | undefined): Promise<void> {
         try {
             this._connection = await createConnection({
                 host: this.host,
                 user: this.user,
                 port: this.port,
-                password
+                password: String(password)
             });
 
             this._ready = true as Ready;

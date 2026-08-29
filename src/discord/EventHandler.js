@@ -1,57 +1,43 @@
-'use strict';
-
-const path = require("path");
-const Files = require("../util/Files");
-const { pathToFileURL } = require("url");
-const fs = require("fs");
-
-const fm = new Files();
-
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const FileManager_1 = __importDefault(require("../util/FileManager"));
+const path_1 = require("path");
+const fs_1 = require("fs");
+const url_1 = require("url");
 class EventHandler {
-    /**
-     * Startet für jedes Element im Event Ordner einen Event Listener
-     * @param {EventOptions} options
-     * */
+    dir;
+    client;
+    logger;
+    _eventFolders;
     constructor(options) {
-        this.dir = options.dir;
         this.client = options.client;
         this.logger = options.logger;
-
-        const eventsDir = path.join(this.dir, 'events');
-
-        if (!fs.existsSync(eventsDir)) {
-            fs.mkdirSync(eventsDir);
-            fs.mkdirSync(path.join(eventsDir, 'ready'));
+        this.dir = (0, path_1.join)(options.dir, 'events');
+        if (!(0, fs_1.existsSync)(this.dir)) {
+            (0, fs_1.mkdirSync)(this.dir);
+            (0, fs_1.mkdirSync)((0, path_1.join)(this.dir, 'ready'));
         }
-
-        this._eventFolders = fm.get(eventsDir, true);
-
-        for (const eventFolder of this._eventFolders) {
-            const eventFiles = fm.get(eventFolder, true);
-
-            eventFiles.sort((a, b) => (a > b ? 1 : -1));
-
-            /**
-             * @param {string} eventName Name des Discord Events
-             * */
-            const eventName = eventFolder.replace(/\\/g, '/').split('/').pop();
-
-            if (eventName) {
-                /**
-                 * Event Listener für das aufgerufene Discord Event
-                 * @param {Client<true>} arg Argument von Discord.js
-                 * */
+        const fm = new FileManager_1.default();
+        this._eventFolders = fm.get(this.dir, true);
+        for (const folder of this._eventFolders) {
+            const name = folder.name;
+            const argName = folder.name;
+            const path = (0, path_1.join)(this.dir, name);
+            const files = fm.get(path, true);
+            files.sort((a, b) => (a > b ? 1 : -1));
+            if (name) {
                 const eventHandler = async (arg) => {
-                    for (const eventFile of eventFiles) {
-                        const { default: eventFunction } = await import(pathToFileURL(eventFile).href);
+                    for (const file of files) {
+                        const { default: eventFunction } = await import((0, url_1.pathToFileURL)((0, path_1.join)(path, file.name)).href);
                         await (await eventFunction)(arg, this.client, this.logger);
                     }
                 };
-
-                this.client.on(eventName, eventHandler);
+                this.client.on(String(name), eventHandler);
             }
         }
     }
 }
-
-module.exports = EventHandler;
+exports.default = EventHandler;

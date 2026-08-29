@@ -3,6 +3,8 @@
 
 # Test files
 /test
+/src-js
+/src-ts
 
 # Dependencies
 /node_modules

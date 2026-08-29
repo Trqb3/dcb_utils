@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync, appendFileSync } from 'fs';
+import { existsSync, mkdirSync, writeFileSync, appendFileSync, openSync, fsyncSync, closeSync } from 'fs';
 import { join } from 'path';
 
 export default class Logger<Ready extends boolean = boolean> {
@@ -6,6 +6,7 @@ export default class Logger<Ready extends boolean = boolean> {
     public levels: Map<number, string>;
     public _ready: Ready;
     private filePath: string;
+    private currentDate: string;
 
     /**
      * Creates a new instance of the Logger class.
@@ -18,6 +19,7 @@ export default class Logger<Ready extends boolean = boolean> {
         this.levels = new Map().set(0, 'INFO').set(1, 'WARN').set(2, 'ERROR').set(3, 'DEBUG');
         this._ready = false as Ready;
         this.filePath = '';
+        this.currentDate = '';
     }
 
     /**
@@ -36,11 +38,22 @@ export default class Logger<Ready extends boolean = boolean> {
     public init(): void {
         if (!existsSync(this.dir)) mkdirSync(this.dir);
 
-        const fileName = `${new Date().toISOString().split('T')[0]}.log`;
-        this.filePath = join(this.dir, fileName);
-
-        writeFileSync(this.filePath, '');
+        this.updateFilePath();
         this._ready = true as Ready;
+    }
+
+    private updateFilePath(): void {
+        const newDate = new Date().toISOString().split('T')[0];
+        if (this.currentDate !== newDate) {
+            this.currentDate = newDate;
+            const fileName = `${this.currentDate}.log`;
+            this.filePath = join(this.dir, fileName);
+
+            if (!existsSync(this.filePath)) {
+                const fd: number = openSync(this.filePath, 'w');
+                closeSync(fd);
+            }
+        }
     }
 
     /**
@@ -52,11 +65,20 @@ export default class Logger<Ready extends boolean = boolean> {
         if (!this._ready) throw new Error('Logger not ready');
 
         try {
+            this.updateFilePath();
+
             const timestamp: string = new Date().toISOString();
-            const logLevel = this.levels.get(level);
+            const logLevel: string | undefined = this.levels.get(level);
+
+            if (!logLevel) throw new Error('Invalid log level');
+
             const logMessage = `${timestamp} - [${logLevel}] - ${message} ${details ? `- (${details})` : ''}`;
 
-            appendFileSync(this.filePath, `${logMessage}\n`, 'utf-8');
+            const fd: number = openSync(this.filePath, 'a');
+            appendFileSync(fd, `${logMessage}\n`, 'utf-8');
+            fsyncSync(fd);
+            closeSync(fd);
+
             console.log(logMessage);
         } catch (error) {
             throw error;

@@ -1,15 +1,18 @@
 {
   "compilerOptions": {
-    "target": "es2016",
-    "module": "commonjs",
+    "target": "ES2024",
+    "module": "NodeNext",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
+    "declarationMap": false,
+    "declarationDir": "typings",
+    "emitDeclarationOnly": false,
     "strict": true,
     "skipLibCheck": true,
-    "outDir": "typings",
+    "outDir": "src",
     "allowJs": true
   },
-  "include": ["src/**/*.js"],
-  "exclude": ["node_modules", "typings"]
+  "include": ["src-ts/**/*.ts"],
+  "exclude": ["node_modules", "typings", "src"]
 }

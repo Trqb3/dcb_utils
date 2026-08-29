@@ -92,7 +92,16 @@ export default class Time extends EventEmitter {
             hour,
             minute,
             poch,
-            toUnix: (): number => Math.floor((this.SB_EPOCH + (year - 1) * 446400000 + (month - 1) * 37200000 + (day - 1) * 1200000 + hour * 50000 + minute * 50000 / 6) / 1000)
+            toUnix() {
+                return Math.floor((
+                    1560275700000 +
+                    (this.year - 1) * 446400000 +
+                    (this.month - 1) * 37200000 +
+                    (this.day - 1) * 1200000 +
+                    this.hour * 50000 +
+                    this.minute * 50000 / 6
+                ) / 1000);
+            }
         };
     }
 
@@ -143,8 +152,10 @@ export default class Time extends EventEmitter {
     }
 
     private msUntilNextChange(): number {
-        const now = new Date();
-        return (10 - (now.getSeconds() % 10)) * 1000 - now.getMilliseconds();
+        const now: number = Date.now();
+        const MS_PER_SB_MINUTE: number = 50_000 / 6;
+        const msSinceEpoch: number = now - this.SB_EPOCH;
+        return MS_PER_SB_MINUTE - (msSinceEpoch % MS_PER_SB_MINUTE);
     }
 
     private checkTime(): void {
@@ -187,6 +198,17 @@ export default class Time extends EventEmitter {
         sbTime.string = this.ampm(sbTime.hour, sbTime.minute);
 
         sbTime.poch = Math.floor(sbTime.day * 1200000 + sbTime.month * 37200000 + (sbTime.year - 1) * 446400000 + sbTime.hour * 50000 + sbTime.minute * 50000 / 6);
+
+        sbTime.toUnix = function () {
+            return Math.floor((
+                1560275700000 +
+                (this.year - 1) * 446400000 +
+                (this.month - 1) * 37200000 +
+                (this.day - 1) * 1200000 +
+                this.hour * 50000 +
+                this.minute * 50000 / 6
+            ) / 1000);
+        };
 
         return sbTime;
     }
