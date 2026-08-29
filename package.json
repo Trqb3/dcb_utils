@@ -1,7 +1,7 @@
 {
   "name": "@trqb3/dcb-utils",
-  "version": "3.3.11",
-  "description": "Discord Bot Utils for Hypixel Skyblock based Discord Bots",
+  "version": "3.3.12",
+  "description": "Discord Bot Utils for Standard and Hypixel SkyBlock based Discord Bots",
   "main": "./src/index.js",
   "types": "./typings/index.d.ts",
   "scripts": {
@@ -13,9 +13,9 @@
     "Discord",
     "Bot",
     "Hypixel",
-    "Skyblock"
+    "SkyBlock"
   ],
-  "author": "Trqb3",
+  "author": "trqb3",
   "license": "ISC",
   "dependencies": {
     "discord.js": "^14.18.0",

@@ -32,10 +32,8 @@ class EventHandler {
             logger: this.logger,
             exceptions: options.commandExceptions
         });
-        if (!(0, fs_1.existsSync)(this.dir)) {
-            (0, fs_1.mkdirSync)(this.dir);
-            (0, fs_1.mkdirSync)((0, path_1.join)(this.dir, 'ready'));
-        }
+        (0, fs_1.mkdirSync)(this.dir, { recursive: true });
+        (0, fs_1.mkdirSync)((0, path_1.join)(this.dir, 'clientReady'), { recursive: true });
         const fm = new FileManager_1.default();
         this.eventFolders = fm.get(this.dir, true);
         this.client.once('clientReady', async () => {

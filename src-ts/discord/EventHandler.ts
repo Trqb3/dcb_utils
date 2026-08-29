@@ -46,10 +46,8 @@ export default class EventHandler {
             exceptions: options.commandExceptions
         });
 
-        if (!existsSync(this.dir)) {
-            mkdirSync(this.dir);
-            mkdirSync(join(this.dir, 'ready'));
-        }
+        mkdirSync(this.dir, { recursive: true });
+        mkdirSync(join(this.dir, 'clientReady'), { recursive: true });
 
         const fm = new FileManager();
         this.eventFolders = fm.get(this.dir, true);

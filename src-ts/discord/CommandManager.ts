@@ -78,10 +78,8 @@ export default class CommandManager {
         this.logger = options.logger;
         this.exceptions = options.exceptions;
 
-        if (!existsSync(this.dir)) {
-            mkdirSync(this.dir);
-            mkdirSync(path.join(this.dir, 'general'));
-        }
+        mkdirSync(this.dir, { recursive: true });
+        mkdirSync(join(this.dir, 'default'), { recursive: true });
 
         this.commands = {
             local: new Map(),
