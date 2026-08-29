@@ -1,3 +1,9 @@
+// Database
+import Database from "./database/Database";
+
+export { Database };
+
+
 // Discord
 import CommandManager from './discord/CommandManager';
 import EventHandler from './discord/EventHandler';
@@ -19,8 +25,7 @@ export { Events, Time };
 
 
 // Util
-import Database from "./util/Database";
 import FileManager from "./util/FileManager";
 import Logger from "./util/Logger";
 
-export { Database, FileManager, Logger };
+export { FileManager, Logger };
