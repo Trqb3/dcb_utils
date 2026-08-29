@@ -1,36 +1,36 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SkyblockMonths = void 0;
+exports.SkyBlockMonths = void 0;
 const events_1 = require("events");
 const DcbError_1 = require("../errors/DcbError");
-var SkyblockMonths;
-(function (SkyblockMonths) {
-    SkyblockMonths[SkyblockMonths["EarlySpring"] = 1] = "EarlySpring";
-    SkyblockMonths[SkyblockMonths["Spring"] = 2] = "Spring";
-    SkyblockMonths[SkyblockMonths["LateSpring"] = 3] = "LateSpring";
-    SkyblockMonths[SkyblockMonths["EarlySummer"] = 4] = "EarlySummer";
-    SkyblockMonths[SkyblockMonths["Summer"] = 5] = "Summer";
-    SkyblockMonths[SkyblockMonths["LateSummer"] = 6] = "LateSummer";
-    SkyblockMonths[SkyblockMonths["EarlyAutumn"] = 7] = "EarlyAutumn";
-    SkyblockMonths[SkyblockMonths["Autumn"] = 8] = "Autumn";
-    SkyblockMonths[SkyblockMonths["LateAutumn"] = 9] = "LateAutumn";
-    SkyblockMonths[SkyblockMonths["EarlyWinter"] = 10] = "EarlyWinter";
-    SkyblockMonths[SkyblockMonths["Winter"] = 11] = "Winter";
-    SkyblockMonths[SkyblockMonths["LateWinter"] = 12] = "LateWinter";
-})(SkyblockMonths || (exports.SkyblockMonths = SkyblockMonths = {}));
+var SkyBlockMonths;
+(function (SkyBlockMonths) {
+    SkyBlockMonths[SkyBlockMonths["EarlySpring"] = 1] = "EarlySpring";
+    SkyBlockMonths[SkyBlockMonths["Spring"] = 2] = "Spring";
+    SkyBlockMonths[SkyBlockMonths["LateSpring"] = 3] = "LateSpring";
+    SkyBlockMonths[SkyBlockMonths["EarlySummer"] = 4] = "EarlySummer";
+    SkyBlockMonths[SkyBlockMonths["Summer"] = 5] = "Summer";
+    SkyBlockMonths[SkyBlockMonths["LateSummer"] = 6] = "LateSummer";
+    SkyBlockMonths[SkyBlockMonths["EarlyAutumn"] = 7] = "EarlyAutumn";
+    SkyBlockMonths[SkyBlockMonths["Autumn"] = 8] = "Autumn";
+    SkyBlockMonths[SkyBlockMonths["LateAutumn"] = 9] = "LateAutumn";
+    SkyBlockMonths[SkyBlockMonths["EarlyWinter"] = 10] = "EarlyWinter";
+    SkyBlockMonths[SkyBlockMonths["Winter"] = 11] = "Winter";
+    SkyBlockMonths[SkyBlockMonths["LateWinter"] = 12] = "LateWinter";
+})(SkyBlockMonths || (exports.SkyBlockMonths = SkyBlockMonths = {}));
 const sbMonths = [
-    SkyblockMonths.EarlySpring,
-    SkyblockMonths.Spring,
-    SkyblockMonths.LateSpring,
-    SkyblockMonths.EarlySummer,
-    SkyblockMonths.Summer,
-    SkyblockMonths.LateSummer,
-    SkyblockMonths.EarlyAutumn,
-    SkyblockMonths.Autumn,
-    SkyblockMonths.LateAutumn,
-    SkyblockMonths.EarlyWinter,
-    SkyblockMonths.Winter,
-    SkyblockMonths.LateWinter
+    SkyBlockMonths.EarlySpring,
+    SkyBlockMonths.Spring,
+    SkyBlockMonths.LateSpring,
+    SkyBlockMonths.EarlySummer,
+    SkyBlockMonths.Summer,
+    SkyBlockMonths.LateSummer,
+    SkyBlockMonths.EarlyAutumn,
+    SkyBlockMonths.Autumn,
+    SkyBlockMonths.LateAutumn,
+    SkyBlockMonths.EarlyWinter,
+    SkyBlockMonths.Winter,
+    SkyBlockMonths.LateWinter
 ];
 /**
  * Base class for the Skyblock Time system calculations.

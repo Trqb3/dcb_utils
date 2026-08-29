@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-export declare enum SkyblockMonths {
+export declare enum SkyBlockMonths {
     EarlySpring = 1,
     Spring = 2,
     LateSpring = 3,
@@ -16,9 +16,9 @@ export declare enum SkyblockMonths {
 /**
  * Format of the Skyblock Time.
  * */
-export interface SkyblockTime {
+export interface SkyBlockTime {
     day: number;
-    month: SkyblockMonths;
+    month: SkyBlockMonths;
     year: number;
     string: string;
     hour: number;
@@ -31,7 +31,7 @@ export interface SkyblockTime {
  * */
 export default class Time extends EventEmitter {
     readonly SB_EPOCH: number;
-    time: SkyblockTime;
+    time: SkyBlockTime;
     /**
      * Creates a new Time instance.
      * */
@@ -44,7 +44,7 @@ export default class Time extends EventEmitter {
      * sbt.get(new Date());
      * @see Time
      * */
-    get(date: Date): SkyblockTime;
+    get(date: Date): SkyBlockTime;
     private ordinal;
     private ampm;
     /**
@@ -56,7 +56,7 @@ export default class Time extends EventEmitter {
      * @see Time
      * @see Time.get
      * */
-    on(eventName: string, listener: (arg: SkyblockTime) => void): this;
+    on(eventName: string, listener: (arg: SkyBlockTime) => void): this;
     private scheduleNextChange;
     private msUntilNextChange;
     private checkTime;
@@ -71,6 +71,6 @@ export default class Time extends EventEmitter {
      * @see Time.get
      * @returns The recalculated SkyblockTime.
      * */
-    recalculate(sbTime: SkyblockTime, sbMinutes: number, negative?: boolean): SkyblockTime;
+    recalculate(sbTime: SkyBlockTime, sbMinutes: number, negative?: boolean): SkyBlockTime;
     private adjustTime;
 }

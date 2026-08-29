@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { DcbError, DcbTypeError, DcbErrorCodes } from '../errors/DcbError';
 
-export enum SkyblockMonths {
+export enum SkyBlockMonths {
     EarlySpring = 1,
     Spring,
     LateSpring,
@@ -16,27 +16,27 @@ export enum SkyblockMonths {
     LateWinter
 }
 
-const sbMonths: SkyblockMonths[] = [
-    SkyblockMonths.EarlySpring,
-    SkyblockMonths.Spring,
-    SkyblockMonths.LateSpring,
-    SkyblockMonths.EarlySummer,
-    SkyblockMonths.Summer,
-    SkyblockMonths.LateSummer,
-    SkyblockMonths.EarlyAutumn,
-    SkyblockMonths.Autumn,
-    SkyblockMonths.LateAutumn,
-    SkyblockMonths.EarlyWinter,
-    SkyblockMonths.Winter,
-    SkyblockMonths.LateWinter
+const sbMonths: SkyBlockMonths[] = [
+    SkyBlockMonths.EarlySpring,
+    SkyBlockMonths.Spring,
+    SkyBlockMonths.LateSpring,
+    SkyBlockMonths.EarlySummer,
+    SkyBlockMonths.Summer,
+    SkyBlockMonths.LateSummer,
+    SkyBlockMonths.EarlyAutumn,
+    SkyBlockMonths.Autumn,
+    SkyBlockMonths.LateAutumn,
+    SkyBlockMonths.EarlyWinter,
+    SkyBlockMonths.Winter,
+    SkyBlockMonths.LateWinter
 ];
 
 /**
  * Format of the Skyblock Time.
  * */
-export interface SkyblockTime {
+export interface SkyBlockTime {
     day: number;
-    month: SkyblockMonths;
+    month: SkyBlockMonths;
     year: number;
     string: string;
     hour: number;
@@ -50,7 +50,7 @@ export interface SkyblockTime {
  * */
 export default class Time extends EventEmitter {
     public readonly SB_EPOCH: number;
-    public time: SkyblockTime;
+    public time: SkyBlockTime;
 
     /**
      * Creates a new Time instance.
@@ -69,7 +69,7 @@ export default class Time extends EventEmitter {
      * sbt.get(new Date());
      * @see Time
      * */
-    public get(date: Date): SkyblockTime {
+    public get(date: Date): SkyBlockTime {
         if (!date) throw new DcbError(DcbErrorCodes.MissingArgument, 'date');
 
         const poch: number = date.getTime() - this.SB_EPOCH;
@@ -92,7 +92,7 @@ export default class Time extends EventEmitter {
             hour,
             minute,
             poch,
-            toUnix() {
+            toUnix(): number {
                 return Math.floor((
                     1560275700000 +
                     (this.year - 1) * 446400000 +
@@ -129,7 +129,7 @@ export default class Time extends EventEmitter {
      * @see Time
      * @see Time.get
      * */
-    public on(eventName: string, listener: (arg: SkyblockTime) => void): this {
+    public on(eventName: string, listener: (arg: SkyBlockTime) => void): this {
         if (!eventName) throw new DcbError(DcbErrorCodes.MissingArgument, 'eventName');
         if (typeof eventName !== 'string') throw new DcbTypeError(DcbErrorCodes.InvalidType, 'eventName', 'string');
 
@@ -159,7 +159,7 @@ export default class Time extends EventEmitter {
     }
 
     private checkTime(): void {
-        const sbTime: SkyblockTime = this.get(new Date());
+        const sbTime: SkyBlockTime = this.get(new Date());
         if (sbTime.string !== this.time.string) {
             this.time = sbTime;
             this.emit('change', sbTime);
@@ -178,7 +178,7 @@ export default class Time extends EventEmitter {
      * @see Time.get
      * @returns The recalculated SkyblockTime.
      * */
-    public recalculate(sbTime: SkyblockTime, sbMinutes: number, negative = false): SkyblockTime {
+    public recalculate(sbTime: SkyBlockTime, sbMinutes: number, negative = false): SkyBlockTime {
         if (!sbTime) throw new DcbError(DcbErrorCodes.MissingArgument, 'sbTime');
         if (typeof sbTime !== 'object') throw new DcbTypeError(DcbErrorCodes.InvalidType, 'sbTime', 'object');
 
@@ -199,7 +199,7 @@ export default class Time extends EventEmitter {
 
         sbTime.poch = Math.floor(sbTime.day * 1200000 + sbTime.month * 37200000 + (sbTime.year - 1) * 446400000 + sbTime.hour * 50000 + sbTime.minute * 50000 / 6);
 
-        sbTime.toUnix = function () {
+        sbTime.toUnix = function (): number {
             return Math.floor((
                 1560275700000 +
                 (this.year - 1) * 446400000 +
@@ -213,7 +213,7 @@ export default class Time extends EventEmitter {
         return sbTime;
     }
 
-    private adjustTime(sbTime: SkyblockTime): SkyblockTime {
+    private adjustTime(sbTime: SkyBlockTime): SkyBlockTime {
         while (sbTime.day <= 0 || sbTime.day > 31) {
             if (sbTime.day <= 0) {
                 sbTime.day += 31;
