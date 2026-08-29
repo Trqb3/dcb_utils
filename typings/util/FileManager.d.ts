@@ -1,4 +1,5 @@
+import { Dirent } from 'fs';
 export default class FileManager {
-    files: Map<any, any>;
-    get(dir: string, foldersOnly?: boolean): import("fs").Dirent[];
+    files: Map<string, string>;
+    get(dir: string, foldersOnly?: boolean): Dirent[];
 }

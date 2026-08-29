@@ -29,7 +29,9 @@ export default class EventHandler {
     commandManager: CommandManager;
     devs: string[];
     testServer?: string;
-    _eventFolders: import("fs").Dirent[];
+    useDefaultInteractionHandler?: boolean;
+    private readonly eventFolders;
     constructor(options: EventOptions);
+    start(): Promise<void>;
     private handleInteraction;
 }

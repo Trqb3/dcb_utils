@@ -15,26 +15,32 @@ class EventHandler {
     commandManager;
     devs;
     testServer;
-    _eventFolders;
+    useDefaultInteractionHandler;
+    eventFolders;
     constructor(options) {
+        this.dir = (0, path_1.join)(options.dir, 'events');
         this.client = options.client;
         this.logger = options.logger;
         this.devs = options.devs ?? [];
         this.testServer = options.testServer;
+        this.useDefaultInteractionHandler = options.useDefaultInteractionHandler ?? true;
         this.commandManager = new CommandManager_1.default({
             dir: options.commandsDir ?? options.dir,
             client: this.client,
             logger: this.logger,
             exceptions: options.commandExceptions
         });
-        this.dir = (0, path_1.join)(options.dir, 'events');
         if (!(0, fs_1.existsSync)(this.dir)) {
             (0, fs_1.mkdirSync)(this.dir);
             (0, fs_1.mkdirSync)((0, path_1.join)(this.dir, 'ready'));
         }
         const fm = new FileManager_1.default();
-        this._eventFolders = fm.get(this.dir, true);
-        for (const folder of this._eventFolders) {
+        this.eventFolders = fm.get(this.dir, true);
+    }
+    async start() {
+        await this.commandManager.registerCommands();
+        for (const folder of this.eventFolders) {
+            const fm = new FileManager_1.default();
             const name = folder.name;
             const argName = folder.name;
             const path = (0, path_1.join)(this.dir, name);
@@ -50,9 +56,8 @@ class EventHandler {
                 this.client.on(String(name), eventHandler);
             }
         }
-        if (options.useDefaultInteractionHandler !== false) {
+        if (this.useDefaultInteractionHandler)
             this.client.on('interactionCreate', (interaction) => this.handleInteraction(interaction));
-        }
     }
     async handleInteraction(interaction) {
         if (!interaction.isChatInputCommand())

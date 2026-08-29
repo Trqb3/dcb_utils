@@ -3,7 +3,7 @@ import Logger from '../util/Logger';
 import FileManager from '../util/FileManager';
 import CommandManager from "./CommandManager";
 import { join } from 'path';
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync, Dirent } from 'fs';
 import { pathToFileURL } from "url";
 
 export interface EventOptions {
@@ -36,13 +36,16 @@ export default class EventHandler {
     public commandManager: CommandManager;
     public devs: string[];
     public testServer?: string;
-    public _eventFolders;
+    public useDefaultInteractionHandler?: boolean;
+    private readonly eventFolders: Dirent[];
 
     constructor(options: EventOptions) {
+        this.dir = join(options.dir, 'events');
         this.client = options.client;
         this.logger = options.logger;
         this.devs = options.devs ?? [];
         this.testServer = options.testServer;
+        this.useDefaultInteractionHandler = options.useDefaultInteractionHandler ?? true;
 
         this.commandManager = new CommandManager(
             {
@@ -53,23 +56,26 @@ export default class EventHandler {
             }
         );
 
-        this.dir = join(options.dir, 'events');
-
         if (!existsSync(this.dir)) {
             mkdirSync(this.dir);
             mkdirSync(join(this.dir, 'ready'));
         }
 
         const fm = new FileManager();
-        this._eventFolders = fm.get(this.dir, true);
+        this.eventFolders = fm.get(this.dir, true);
+    }
 
-        for (const folder of this._eventFolders) {
+    public async start(): Promise<void> {
+        await this.commandManager.registerCommands();
+
+        for (const folder of this.eventFolders) {
+            const fm = new FileManager();
             const name: string = folder.name;
             const argName = folder.name as keyof ClientEvents;
             const path: string = join(this.dir, name);
-            const files = fm.get(path, true);
+            const files: Dirent[] = fm.get(path, true);
 
-            files.sort((a, b): 1 | -1 => (a > b ? 1 : -1));
+            files.sort((a: Dirent, b: Dirent): 1 | -1 => (a > b ? 1 : -1));
 
             if (name) {
                 const eventHandler = async (arg: ClientEvents[typeof argName]): Promise<void> => {
@@ -83,9 +89,7 @@ export default class EventHandler {
             }
         }
 
-        if (options.useDefaultInteractionHandler !== false) {
-            this.client.on('interactionCreate', (interaction): Promise<void> => this.handleInteraction(interaction));
-        }
+        if (this.useDefaultInteractionHandler) this.client.on('interactionCreate', (interaction: Interaction): Promise<void> => this.handleInteraction(interaction));
     }
 
 
