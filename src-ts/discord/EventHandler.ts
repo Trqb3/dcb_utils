@@ -6,6 +6,7 @@ import { Command } from "./CommandManager";
 import { join } from 'path';
 import { existsSync, mkdirSync, Dirent } from 'fs';
 import { pathToFileURL } from "url";
+import { once } from 'events';
 
 export interface EventOptions {
     dir: string;
@@ -56,8 +57,6 @@ export default class EventHandler {
     }
 
     public async start(): Promise<void> {
-        await this.commandManager.registerCommands();
-
         for (const folder of this.eventFolders) {
             const fm = new FileManager();
             const name: string = folder.name;
@@ -78,6 +77,9 @@ export default class EventHandler {
                 this.client.on(String(name), eventHandler);
             }
         }
+
+        if (!this.client.isReady()) await once(this.client, 'clientReady');
+        await this.commandManager.registerCommands();
 
         if (this.useDefaultCommandInteractionHandler) this.client.on('interactionCreate', (interaction: Interaction): Promise<void> => this.handleCommandInteraction(interaction));
     }

@@ -8,6 +8,7 @@ const CommandManager_1 = __importDefault(require("./CommandManager"));
 const path_1 = require("path");
 const fs_1 = require("fs");
 const url_1 = require("url");
+const events_1 = require("events");
 class EventHandler {
     dir;
     client;
@@ -38,7 +39,6 @@ class EventHandler {
         this.eventFolders = fm.get(this.dir, true);
     }
     async start() {
-        await this.commandManager.registerCommands();
         for (const folder of this.eventFolders) {
             const fm = new FileManager_1.default();
             const name = folder.name;
@@ -56,6 +56,9 @@ class EventHandler {
                 this.client.on(String(name), eventHandler);
             }
         }
+        if (!this.client.isReady())
+            await (0, events_1.once)(this.client, 'clientReady');
+        await this.commandManager.registerCommands();
         if (this.useDefaultCommandInteractionHandler)
             this.client.on('interactionCreate', (interaction) => this.handleCommandInteraction(interaction));
     }
