@@ -36,7 +36,7 @@ export default class EventHandler {
     public commandManager: CommandManager;
     public devs: string[];
     public testServer?: string;
-    public useDefaultInteractionHandler?: boolean;
+    public readonly useDefaultInteractionHandler: boolean;
     private readonly eventFolders: Dirent[];
 
     constructor(options: EventOptions) {

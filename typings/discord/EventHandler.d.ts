@@ -29,7 +29,7 @@ export default class EventHandler {
     commandManager: CommandManager;
     devs: string[];
     testServer?: string;
-    useDefaultInteractionHandler?: boolean;
+    readonly useDefaultInteractionHandler: boolean;
     private readonly eventFolders;
     constructor(options: EventOptions);
     start(): Promise<void>;
