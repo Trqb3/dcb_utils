@@ -22,5 +22,6 @@ export { Events, Time };
 import Database from "./util/Database";
 import FileManager from "./util/FileManager";
 import Logger from "./util/Logger";
+import { validateEnv } from "./util/Env";
 
-export { Database, FileManager, Logger };
+export { Database, FileManager, Logger, validateEnv };

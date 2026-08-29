@@ -43,6 +43,7 @@ function message(code: ErrorCodes, args: any): string {
 export enum ErrorCodes {
     InvalidType = 'InvalidType',
     MissingArgument = 'MissingArgument',
+    MissingEnv = 'MissingEnv',
 
     NotReady = 'NotReady',
 
@@ -55,6 +56,7 @@ export enum ErrorCodes {
 const Messages = {
     [ErrorCodes.InvalidType]: 'Provided type is invalid',
     [ErrorCodes.MissingArgument]: 'Missing required argument',
+    [ErrorCodes.MissingEnv]: 'Missing required environment variable',
 
     [ErrorCodes.NotReady]: 'Not ready',
 

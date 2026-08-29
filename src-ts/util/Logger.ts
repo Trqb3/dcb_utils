@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync, appendFileSync, openSync, fsyncSync, closeSync } from 'fs';
+import { existsSync, mkdirSync, appendFileSync, openSync, fsyncSync, closeSync } from 'fs';
 import { join } from 'path';
 
 export default class Logger<Ready extends boolean = boolean> {
@@ -43,7 +43,7 @@ export default class Logger<Ready extends boolean = boolean> {
     }
 
     private updateFilePath(): void {
-        const newDate = new Date().toISOString().split('T')[0];
+        const newDate: string = new Date().toISOString().split('T')[0];
         if (this.currentDate !== newDate) {
             this.currentDate = newDate;
             const fileName = `${this.currentDate}.log`;

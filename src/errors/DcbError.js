@@ -48,6 +48,7 @@ var ErrorCodes;
 (function (ErrorCodes) {
     ErrorCodes["InvalidType"] = "InvalidType";
     ErrorCodes["MissingArgument"] = "MissingArgument";
+    ErrorCodes["MissingEnv"] = "MissingEnv";
     ErrorCodes["NotReady"] = "NotReady";
     ErrorCodes["FailedCall"] = "FailedCall";
 })(ErrorCodes || (exports.ErrorCodes = ErrorCodes = {}));
@@ -57,6 +58,7 @@ var ErrorCodes;
 const Messages = {
     [ErrorCodes.InvalidType]: 'Provided type is invalid',
     [ErrorCodes.MissingArgument]: 'Missing required argument',
+    [ErrorCodes.MissingEnv]: 'Missing required environment variable',
     [ErrorCodes.NotReady]: 'Not ready',
     [ErrorCodes.FailedCall]: 'Failed to call function',
 };
