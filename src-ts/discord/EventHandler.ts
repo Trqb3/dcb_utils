@@ -1,4 +1,4 @@
-import { Client, ClientEvents, Interaction, GuildMember } from 'discord.js';
+import { Client, ClientEvents, Interaction, GuildMember, MessageFlagsBitField } from 'discord.js';
 import Logger from '../util/Logger';
 import FileManager from '../util/FileManager';
 import CommandManager from "./CommandManager";
@@ -104,19 +104,25 @@ export default class EventHandler {
 
         try {
             if (command.devOnly && !this.devs.includes(interaction.user.id)) {
-                await interaction.reply({ content: 'This command is only available to developers.', ephemeral: true });
+                await interaction.reply({ content: 'This command is only available to developers.',
+                    flags: MessageFlagsBitField.Flags.Ephemeral
+                });
                 return;
             }
 
             if (command.testOnly && interaction.guildId !== this.testServer) {
-                await interaction.reply({ content: 'This command is only available in the test server.', ephemeral: true });
+                await interaction.reply({ content: 'This command is only available in the test server.',
+                    flags: MessageFlagsBitField.Flags.Ephemeral
+                });
                 return;
             }
 
             if (command.permissionsRequired?.length) {
                 for (const permission of command.permissionsRequired) {
                     if (!interaction.memberPermissions?.has(permission)) {
-                        await interaction.reply({ content: 'You do not have the required permissions to use this command.', ephemeral: true });
+                        await interaction.reply({ content: 'You do not have the required permissions to use this command.',
+                            flags: MessageFlagsBitField.Flags.Ephemeral
+                        });
                         return;
                     }
                 }
@@ -129,7 +135,9 @@ export default class EventHandler {
 
                 for (const permission of command.botPermissions) {
                     if (!bot?.permissions.has(permission)) {
-                        await interaction.reply({ content: 'I do not have the required permissions to execute this command.', ephemeral: true });
+                        await interaction.reply({ content: 'I do not have the required permissions to execute this command.',
+                            flags: MessageFlagsBitField.Flags.Ephemeral
+                        });
                         return;
                     }
                 }

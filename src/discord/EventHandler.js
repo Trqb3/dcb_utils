@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const discord_js_1 = require("discord.js");
 const FileManager_1 = __importDefault(require("../util/FileManager"));
 const CommandManager_1 = __importDefault(require("./CommandManager"));
 const path_1 = require("path");
@@ -74,17 +75,23 @@ class EventHandler {
         }
         try {
             if (command.devOnly && !this.devs.includes(interaction.user.id)) {
-                await interaction.reply({ content: 'This command is only available to developers.', ephemeral: true });
+                await interaction.reply({ content: 'This command is only available to developers.',
+                    flags: discord_js_1.MessageFlagsBitField.Flags.Ephemeral
+                });
                 return;
             }
             if (command.testOnly && interaction.guildId !== this.testServer) {
-                await interaction.reply({ content: 'This command is only available in the test server.', ephemeral: true });
+                await interaction.reply({ content: 'This command is only available in the test server.',
+                    flags: discord_js_1.MessageFlagsBitField.Flags.Ephemeral
+                });
                 return;
             }
             if (command.permissionsRequired?.length) {
                 for (const permission of command.permissionsRequired) {
                     if (!interaction.memberPermissions?.has(permission)) {
-                        await interaction.reply({ content: 'You do not have the required permissions to use this command.', ephemeral: true });
+                        await interaction.reply({ content: 'You do not have the required permissions to use this command.',
+                            flags: discord_js_1.MessageFlagsBitField.Flags.Ephemeral
+                        });
                         return;
                     }
                 }
@@ -95,7 +102,9 @@ class EventHandler {
                     return;
                 for (const permission of command.botPermissions) {
                     if (!bot?.permissions.has(permission)) {
-                        await interaction.reply({ content: 'I do not have the required permissions to execute this command.', ephemeral: true });
+                        await interaction.reply({ content: 'I do not have the required permissions to execute this command.',
+                            flags: discord_js_1.MessageFlagsBitField.Flags.Ephemeral
+                        });
                         return;
                     }
                 }
