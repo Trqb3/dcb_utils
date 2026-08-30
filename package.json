@@ -1,13 +1,11 @@
 {
   "name": "@trqb3/dcb-utils",
-  "version": "3.3.15",
+  "version": "3.3.16",
   "description": "Discord Bot Utils for Standard and Hypixel SkyBlock based Discord Bots",
   "main": "./src/index.js",
   "types": "./typings/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc",
-    "bundle-dts": "dts-bundle --name @trqb3/dcb-utils --main ./src/index.d.ts --out ./typings/index.d.ts"
+    "build": "tsc"
   },
   "keywords": [
     "Discord",
@@ -18,14 +16,13 @@
   "author": "trqb3",
   "license": "MIT",
   "dependencies": {
-    "discord.js": "^14.18.0",
-    "dotenv": "^16.4.7",
+    "discord.js": "^14.27.0",
+    "dotenv": "^17.4.2",
     "events": "^3.3.0",
-    "mysql2": "^3.12.0"
+    "mysql2": "^3.24.2"
   },
   "devDependencies": {
-    "dts-bundle": "^0.7.3",
-    "typescript": "^5.8.2"
+    "typescript": "^7.0.2"
   },
   "files": [
     "src",
