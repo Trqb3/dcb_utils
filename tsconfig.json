@@ -11,6 +11,7 @@
     "strict": true,
     "skipLibCheck": true,
     "outDir": "src",
+    "rootDir": "src-ts",
     "allowJs": true
   },
   "include": ["src-ts/**/*.ts"],
