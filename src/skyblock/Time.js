@@ -33,9 +33,21 @@ const sbMonths = [
     SkyBlockMonths.LateWinter
 ];
 /**
- * Base class for the Skyblock Time system calculations.
+ * Base class for the SkyBlock Time system calculations.
  * */
 class Time extends events_1.EventEmitter {
+    static SB_EPOCH_MS = 1560275700000;
+    static MS_PER_YEAR = 446400000;
+    static MS_PER_MONTH = 37200000;
+    static MS_PER_DAY = 1200000;
+    static MS_PER_HOUR = 50000;
+    static TICKS_PER_HOUR = 6;
+    static MINUTES_PER_TICK = 10;
+    static MINUTES_PER_HOUR = 60;
+    static HOURS_PER_DAY = 24;
+    static DAYS_PER_MONTH = 31;
+    static MONTHS_PER_YEAR = 12;
+    static MS_PER_SB_TICK = Time.MS_PER_HOUR / Time.TICKS_PER_HOUR;
     SB_EPOCH;
     time;
     /**
@@ -43,13 +55,13 @@ class Time extends events_1.EventEmitter {
      * */
     constructor() {
         super();
-        this.SB_EPOCH = 1560275700000;
+        this.SB_EPOCH = Time.SB_EPOCH_MS;
         this.time = this.get(new Date());
     }
     /**
-     * Calculates the SkyblockTime based on the given Date.
-     * @param {Date} date The Date to calculate the SkyblockTime from.
-     * @returns The calculated SkyblockTime.
+     * Calculates the SkyBlockTime based on the given Date.
+     * @param {Date} date The Date to calculate the SkyBlockTime from.
+     * @returns The calculated SkyBlockTime.
      * @example
      * sbt.get(new Date());
      * @see Time
@@ -57,12 +69,12 @@ class Time extends events_1.EventEmitter {
     get(date) {
         if (!date)
             throw new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.MissingArgument, 'date');
-        const poch = date.getTime() - this.SB_EPOCH;
-        const sbYear = Math.floor(poch / 446400000) + 1;
-        const sbMonth = Math.floor(poch / 37200000) % 12;
-        const sbDay = Math.floor(poch / 1200000) % 31;
-        const hour = Math.floor(poch / 50000) % 24;
-        const minute = Math.floor(6 * poch / 50000) % 6;
+        const poch = date.getTime() - Time.SB_EPOCH_MS;
+        const sbYear = Math.floor(poch / Time.MS_PER_YEAR) + 1;
+        const sbMonth = Math.floor(poch / Time.MS_PER_MONTH) % Time.MONTHS_PER_YEAR;
+        const sbDay = Math.floor(poch / Time.MS_PER_DAY) % Time.DAYS_PER_MONTH;
+        const hour = Math.floor(poch / Time.MS_PER_HOUR) % Time.HOURS_PER_DAY;
+        const minute = Math.floor(Time.TICKS_PER_HOUR * poch / Time.MS_PER_HOUR) % Time.TICKS_PER_HOUR;
         const day = this.ordinal(sbDay + 1);
         const month = sbMonths[sbMonth];
         const year = sbYear;
@@ -76,14 +88,21 @@ class Time extends events_1.EventEmitter {
             minute,
             poch,
             toUnix() {
-                return Math.floor((1560275700000 +
-                    (this.year - 1) * 446400000 +
-                    (this.month - 1) * 37200000 +
-                    (this.day - 1) * 1200000 +
-                    this.hour * 50000 +
-                    this.minute * 50000 / 6) / 1000);
+                return Time.toUnixFrom(this);
             }
         };
+    }
+    /**
+     * Calculates the SkyBlockTime based on the given Date and returns the Unix timestamp (seconds).
+     * @returns The calculated Unix timestamp (seconds).
+     * */
+    static toUnixFrom(t) {
+        return Math.floor((Time.SB_EPOCH_MS +
+            (t.year - 1) * Time.MS_PER_YEAR +
+            (t.month - 1) * Time.MS_PER_MONTH +
+            (t.day - 1) * Time.MS_PER_DAY +
+            t.hour * Time.MS_PER_HOUR +
+            t.minute * Time.MS_PER_SB_TICK) / 1000);
     }
     ordinal(n) {
         const v = n % 100;
@@ -99,11 +118,11 @@ class Time extends events_1.EventEmitter {
         return `${h}:${m}0${suffix}`;
     }
     /**
-     * Adds a listener to the SkyblockTime instance.
+     * Adds a listener to the SkyBlockTime instance.
      * @param {string} eventName The name of the event.
-     * @param {(arg: SkyblockTime) => void} listener The listener to add.
+     * @param {(arg: SkyBlockTime) => void} listener The listener to add.
      * @example
-     * sbt.on('change', (time: SkyblockTime): void => console.log(time));
+     * sbt.on('change', (time: SkyBlockTime): void => console.log(time));
      * @see Time
      * @see Time.get
      * */
@@ -129,9 +148,8 @@ class Time extends events_1.EventEmitter {
     }
     msUntilNextChange() {
         const now = Date.now();
-        const MS_PER_SB_MINUTE = 50_000 / 6;
-        const msSinceEpoch = now - this.SB_EPOCH;
-        return MS_PER_SB_MINUTE - (msSinceEpoch % MS_PER_SB_MINUTE);
+        const msSinceEpoch = now - Time.SB_EPOCH_MS;
+        return Time.MS_PER_SB_TICK - (msSinceEpoch % Time.MS_PER_SB_TICK);
     }
     checkTime() {
         const sbTime = this.get(new Date());
@@ -141,55 +159,56 @@ class Time extends events_1.EventEmitter {
         }
     }
     /**
-     * Calculates the new SkyblockTime based on the given SkyblockTime and the given amount of minutes.
-     * @param {SkyblockTime} sbTime The SkyblockTime to recalculate.
+     * Calculates the new SkyBlockTime based on the given SkyBlockTime and the given amount of minutes..
+     * @param {SkyBlockTime} sbTime The SkyBlockTime to recalculate.
      * @param {number} sbMinutes The amount of minutes to add or subtract.
      * @param {boolean} [negative=false] Whether to subtract the minutes instead of adding them.
      * @example
      * sbt.recaculate(sbt.get(new Date()), 10);
      * @see Time
      * @see Time.get
-     * @returns The recalculated SkyblockTime.
+     * @returns The recalculated SkyBlockTime.
      * */
     recalculate(sbTime, sbMinutes, negative = false) {
         if (!sbTime)
             throw new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.MissingArgument, 'sbTime');
         if (typeof sbTime !== 'object')
             throw new DcbError_1.DcbTypeError(DcbError_1.DcbErrorCodes.InvalidType, 'sbTime', 'object');
-        const totalMinutes = sbTime.hour * 60 + sbTime.minute + (negative ? -sbMinutes : sbMinutes);
-        sbTime.hour = Math.floor((totalMinutes / 60) % 24);
-        sbTime.minute = (totalMinutes % 60 + 60) % 60;
-        if (totalMinutes < 0 && sbTime.minute > 0) {
-            sbTime.hour--;
-        }
-        sbTime.day += Math.floor(totalMinutes / (24 * 60));
+        const totalMinutes = sbTime.hour * Time.MINUTES_PER_HOUR +
+            sbTime.minute * Time.MINUTES_PER_TICK +
+            (negative ? -sbMinutes : sbMinutes);
+        const minutesPerDay = Time.HOURS_PER_DAY * Time.MINUTES_PER_HOUR;
+        const dayCarry = Math.floor(totalMinutes / minutesPerDay);
+        const remaining = totalMinutes - dayCarry * minutesPerDay; // immer 0..1439
+        sbTime.day += dayCarry;
+        sbTime.hour = Math.floor(remaining / Time.MINUTES_PER_HOUR);
+        sbTime.minute = Math.floor((remaining % Time.MINUTES_PER_HOUR) / Time.MINUTES_PER_TICK);
         sbTime = this.adjustTime(sbTime);
         sbTime.string = this.ampm(sbTime.hour, sbTime.minute);
-        sbTime.poch = Math.floor(sbTime.day * 1200000 + sbTime.month * 37200000 + (sbTime.year - 1) * 446400000 + sbTime.hour * 50000 + sbTime.minute * 50000 / 6);
+        sbTime.poch = Math.floor(sbTime.day * Time.MS_PER_DAY +
+            sbTime.month * Time.MS_PER_MONTH +
+            (sbTime.year - 1) * Time.MS_PER_YEAR +
+            sbTime.hour * Time.MS_PER_HOUR +
+            sbTime.minute * Time.MS_PER_SB_TICK);
         sbTime.toUnix = function () {
-            return Math.floor((1560275700000 +
-                (this.year - 1) * 446400000 +
-                (this.month - 1) * 37200000 +
-                (this.day - 1) * 1200000 +
-                this.hour * 50000 +
-                this.minute * 50000 / 6) / 1000);
+            return Time.toUnixFrom(this);
         };
         return sbTime;
     }
     adjustTime(sbTime) {
-        while (sbTime.day <= 0 || sbTime.day > 31) {
+        while (sbTime.day <= 0 || sbTime.day > Time.DAYS_PER_MONTH) {
             if (sbTime.day <= 0) {
-                sbTime.day += 31;
+                sbTime.day += Time.DAYS_PER_MONTH;
                 sbTime.month--;
                 if (sbTime.month <= 0) {
-                    sbTime.month = 12;
+                    sbTime.month = Time.MONTHS_PER_YEAR;
                     sbTime.year--;
                 }
             }
             else {
-                sbTime.day -= 31;
+                sbTime.day -= Time.DAYS_PER_MONTH;
                 sbTime.month++;
-                if (sbTime.month > 12) {
+                if (sbTime.month > Time.MONTHS_PER_YEAR) {
                     sbTime.month = 1;
                     sbTime.year++;
                 }

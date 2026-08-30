@@ -32,7 +32,7 @@ const sbMonths: SkyBlockMonths[] = [
 ];
 
 /**
- * Format of the Skyblock Time.
+ * Format of the SkyBlock Time.
  * */
 export interface SkyBlockTime {
     day: number;
@@ -46,9 +46,22 @@ export interface SkyBlockTime {
 }
 
 /**
- * Base class for the Skyblock Time system calculations.
+ * Base class for the SkyBlock Time system calculations.
  * */
 export default class Time extends EventEmitter {
+    private static readonly SB_EPOCH_MS: number = 1560275700000;
+    private static readonly MS_PER_YEAR: number = 446400000;
+    private static readonly MS_PER_MONTH: number = 37200000;
+    private static readonly MS_PER_DAY: number = 1200000;
+    private static readonly MS_PER_HOUR: number = 50000;
+    private static readonly TICKS_PER_HOUR: number = 6;
+    private static readonly MINUTES_PER_TICK: number = 10;
+    private static readonly MINUTES_PER_HOUR: number = 60;
+    private static readonly HOURS_PER_DAY: number = 24;
+    private static readonly DAYS_PER_MONTH: number = 31;
+    private static readonly MONTHS_PER_YEAR: number = 12;
+    private static readonly MS_PER_SB_TICK: number = Time.MS_PER_HOUR / Time.TICKS_PER_HOUR;
+
     public readonly SB_EPOCH: number;
     public time: SkyBlockTime;
 
@@ -57,14 +70,14 @@ export default class Time extends EventEmitter {
      * */
     constructor() {
         super();
-        this.SB_EPOCH = 1560275700000;
+        this.SB_EPOCH = Time.SB_EPOCH_MS;
         this.time = this.get(new Date());
     }
 
     /**
-     * Calculates the SkyblockTime based on the given Date.
-     * @param {Date} date The Date to calculate the SkyblockTime from.
-     * @returns The calculated SkyblockTime.
+     * Calculates the SkyBlockTime based on the given Date.
+     * @param {Date} date The Date to calculate the SkyBlockTime from.
+     * @returns The calculated SkyBlockTime.
      * @example
      * sbt.get(new Date());
      * @see Time
@@ -72,12 +85,12 @@ export default class Time extends EventEmitter {
     public get(date: Date): SkyBlockTime {
         if (!date) throw new DcbError(DcbErrorCodes.MissingArgument, 'date');
 
-        const poch: number = date.getTime() - this.SB_EPOCH;
-        const sbYear: number = Math.floor(poch / 446400000) + 1;
-        const sbMonth: number = Math.floor(poch / 37200000) % 12;
-        const sbDay: number = Math.floor(poch / 1200000) % 31;
-        const hour: number = Math.floor(poch / 50000) % 24;
-        const minute: number = Math.floor(6 * poch / 50000) % 6;
+        const poch: number = date.getTime() - Time.SB_EPOCH_MS;
+        const sbYear: number = Math.floor(poch / Time.MS_PER_YEAR) + 1;
+        const sbMonth: number = Math.floor(poch / Time.MS_PER_MONTH) % Time.MONTHS_PER_YEAR;
+        const sbDay: number = Math.floor(poch / Time.MS_PER_DAY) % Time.DAYS_PER_MONTH;
+        const hour: number = Math.floor(poch / Time.MS_PER_HOUR) % Time.HOURS_PER_DAY;
+        const minute: number = Math.floor(Time.TICKS_PER_HOUR * poch / Time.MS_PER_HOUR) % Time.TICKS_PER_HOUR;
 
         const day: number = this.ordinal(sbDay + 1);
         const month: number = sbMonths[sbMonth];
@@ -93,16 +106,24 @@ export default class Time extends EventEmitter {
             minute,
             poch,
             toUnix(): number {
-                return Math.floor((
-                    1560275700000 +
-                    (this.year - 1) * 446400000 +
-                    (this.month - 1) * 37200000 +
-                    (this.day - 1) * 1200000 +
-                    this.hour * 50000 +
-                    this.minute * 50000 / 6
-                ) / 1000);
+                return Time.toUnixFrom(this);
             }
         };
+    }
+
+    /**
+     * Calculates the SkyBlockTime based on the given Date and returns the Unix timestamp (seconds).
+     * @returns The calculated Unix timestamp (seconds).
+     * */
+    private static toUnixFrom(t: Pick<SkyBlockTime, 'year' | 'month' | 'day' | 'hour' | 'minute'>): number {
+        return Math.floor((
+            Time.SB_EPOCH_MS +
+            (t.year - 1) * Time.MS_PER_YEAR +
+            (t.month - 1) * Time.MS_PER_MONTH +
+            (t.day - 1) * Time.MS_PER_DAY +
+            t.hour * Time.MS_PER_HOUR +
+            t.minute * Time.MS_PER_SB_TICK
+        ) / 1000);
     }
 
     private ordinal(n: number): number {
@@ -121,11 +142,11 @@ export default class Time extends EventEmitter {
     }
 
     /**
-     * Adds a listener to the SkyblockTime instance.
+     * Adds a listener to the SkyBlockTime instance.
      * @param {string} eventName The name of the event.
-     * @param {(arg: SkyblockTime) => void} listener The listener to add.
+     * @param {(arg: SkyBlockTime) => void} listener The listener to add.
      * @example
-     * sbt.on('change', (time: SkyblockTime): void => console.log(time));
+     * sbt.on('change', (time: SkyBlockTime): void => console.log(time));
      * @see Time
      * @see Time.get
      * */
@@ -153,9 +174,8 @@ export default class Time extends EventEmitter {
 
     private msUntilNextChange(): number {
         const now: number = Date.now();
-        const MS_PER_SB_MINUTE: number = 50_000 / 6;
-        const msSinceEpoch: number = now - this.SB_EPOCH;
-        return MS_PER_SB_MINUTE - (msSinceEpoch % MS_PER_SB_MINUTE);
+        const msSinceEpoch: number = now - Time.SB_EPOCH_MS;
+        return Time.MS_PER_SB_TICK - (msSinceEpoch % Time.MS_PER_SB_TICK);
     }
 
     private checkTime(): void {
@@ -166,66 +186,66 @@ export default class Time extends EventEmitter {
         }
     }
 
-
     /**
-     * Calculates the new SkyblockTime based on the given SkyblockTime and the given amount of minutes.
-     * @param {SkyblockTime} sbTime The SkyblockTime to recalculate.
+     * Calculates the new SkyBlockTime based on the given SkyBlockTime and the given amount of minutes..
+     * @param {SkyBlockTime} sbTime The SkyBlockTime to recalculate.
      * @param {number} sbMinutes The amount of minutes to add or subtract.
      * @param {boolean} [negative=false] Whether to subtract the minutes instead of adding them.
      * @example
      * sbt.recaculate(sbt.get(new Date()), 10);
      * @see Time
      * @see Time.get
-     * @returns The recalculated SkyblockTime.
+     * @returns The recalculated SkyBlockTime.
      * */
     public recalculate(sbTime: SkyBlockTime, sbMinutes: number, negative = false): SkyBlockTime {
         if (!sbTime) throw new DcbError(DcbErrorCodes.MissingArgument, 'sbTime');
         if (typeof sbTime !== 'object') throw new DcbTypeError(DcbErrorCodes.InvalidType, 'sbTime', 'object');
 
-        const totalMinutes: number = sbTime.hour * 60 + sbTime.minute + (negative ? -sbMinutes : sbMinutes);
+        const totalMinutes: number =
+            sbTime.hour * Time.MINUTES_PER_HOUR +
+            sbTime.minute * Time.MINUTES_PER_TICK +
+            (negative ? -sbMinutes : sbMinutes);
 
-        sbTime.hour = Math.floor((totalMinutes / 60) % 24);
-        sbTime.minute = (totalMinutes % 60 + 60) % 60;
+        const minutesPerDay: number = Time.HOURS_PER_DAY * Time.MINUTES_PER_HOUR;
+        const dayCarry: number = Math.floor(totalMinutes / minutesPerDay);
+        const remaining: number = totalMinutes - dayCarry * minutesPerDay; // immer 0..1439
 
-        if (totalMinutes < 0 && sbTime.minute > 0) {
-            sbTime.hour--;
-        }
-
-        sbTime.day += Math.floor(totalMinutes / (24 * 60));
+        sbTime.day += dayCarry;
+        sbTime.hour = Math.floor(remaining / Time.MINUTES_PER_HOUR);
+        sbTime.minute = Math.floor((remaining % Time.MINUTES_PER_HOUR) / Time.MINUTES_PER_TICK);
 
         sbTime = this.adjustTime(sbTime);
 
         sbTime.string = this.ampm(sbTime.hour, sbTime.minute);
 
-        sbTime.poch = Math.floor(sbTime.day * 1200000 + sbTime.month * 37200000 + (sbTime.year - 1) * 446400000 + sbTime.hour * 50000 + sbTime.minute * 50000 / 6);
+        sbTime.poch = Math.floor(
+            sbTime.day * Time.MS_PER_DAY +
+            sbTime.month * Time.MS_PER_MONTH +
+            (sbTime.year - 1) * Time.MS_PER_YEAR +
+            sbTime.hour * Time.MS_PER_HOUR +
+            sbTime.minute * Time.MS_PER_SB_TICK
+        );
 
-        sbTime.toUnix = function (): number {
-            return Math.floor((
-                1560275700000 +
-                (this.year - 1) * 446400000 +
-                (this.month - 1) * 37200000 +
-                (this.day - 1) * 1200000 +
-                this.hour * 50000 +
-                this.minute * 50000 / 6
-            ) / 1000);
+        sbTime.toUnix = function (this: SkyBlockTime): number {
+            return Time.toUnixFrom(this);
         };
 
         return sbTime;
     }
 
     private adjustTime(sbTime: SkyBlockTime): SkyBlockTime {
-        while (sbTime.day <= 0 || sbTime.day > 31) {
+        while (sbTime.day <= 0 || sbTime.day > Time.DAYS_PER_MONTH) {
             if (sbTime.day <= 0) {
-                sbTime.day += 31;
+                sbTime.day += Time.DAYS_PER_MONTH;
                 sbTime.month--;
                 if (sbTime.month <= 0) {
-                    sbTime.month = 12;
+                    sbTime.month = Time.MONTHS_PER_YEAR;
                     sbTime.year--;
                 }
             } else {
-                sbTime.day -= 31;
+                sbTime.day -= Time.DAYS_PER_MONTH;
                 sbTime.month++;
-                if (sbTime.month > 12) {
+                if (sbTime.month > Time.MONTHS_PER_YEAR) {
                     sbTime.month = 1;
                     sbTime.year++;
                 }
