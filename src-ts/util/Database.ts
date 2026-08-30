@@ -1,115 +1,158 @@
-import { Connection, QueryResult, createConnection } from 'mysql2/promise';
+import { QueryResult, Pool, PoolOptions, PoolConnection, createPool } from 'mysql2/promise';
+import { DcbError, DcbErrorCodes } from '../errors/DcbError';
+import { EventEmitter } from 'events';
 
 /**
  * Options for the Database class.
  * */
 export interface DatabaseOptions {
-    host: string | undefined;
-    user: string | undefined;
-    port: string | number | undefined;
+    host: string;
+    user: string;
+    port: number;
+    database: string;
+    connectionLimit?: number;
 }
+
+const DB_NAME_PATTERN = /^[a-zA-Z0-9_]+$/;
 
 /**
  * Everything needed to interact with a MySQL database but simplified.
  * */
-export default class Database<Ready extends boolean = boolean> {
-    private readonly host: string;
-    private readonly user: string;
-    private readonly port: number;
-    public _ready: Ready;
-    public _connection: Connection | undefined;
+export default class DatabaseConnection {
+    private readonly options: DatabaseOptions;
+    private pool: Pool | undefined;
 
     /**
      * Creates a new instance of the Database class.
      * @param options The options to connect to the database.
      * @example
-     * const db = new Database({
+     * const db = new DatabaseConnection({
      *     host: 'localhost',
      *     user: 'root',
      *     port: 3306,
+     *     database: 'my_database',
      * });
      * */
     constructor(options: DatabaseOptions) {
-        this.host = String(options.host);
-        this.user = String(options.user);
-        this.port = Number(options.port);
-        this._ready = false as Ready;
+        if (!DB_NAME_PATTERN.test(options.database)) throw new DcbError(DcbErrorCodes.InvalidInput, 'Database name must only contain alphanumeric characters and underscores');
+        this.options = options;
     }
 
     /**
-     * Basic request to check if the database connection is ready.
-     * @returns Whether the database is ready.
+     * Whether the database connection is initialized and ready to use.
+     * @returns boolean
      * */
-    public get ready(): Ready {
-        return this._ready;
+    public get ready(): boolean {
+        return this.pool !== undefined;
     }
+
+
+
+    private static readonly RETRYABLE_CODES: Set<string> = new Set([
+        'ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND', 'PROTOCOL_CONNECTION_LOST', 'ECONNRESET'
+    ]);
 
     /**
      * Establishes a connection to the database.
      * @param password The password to connect to the database.
+     * @param maxRetries The maximum number of retries for connection attempts. Default is 3.
      * @example
-     * await db.login('password');
-     * @see {@link Database.constructor Database initialization}
-     * @see {@link Database.login Database login}
+     * await db.connect('password');
+     * @see {@link DatabaseConnection.constructor Database initialization}
+     * @see {@link DatabaseConnection.disconnect Database disconnection}
+     * @see {@link DatabaseConnection.query Database query}
+     * @see {@link DatabaseConnection.ready Database readiness}
      * @returns Promise<void>
      * */
-    public async login(password: string | undefined): Promise<void> {
-        try {
-            this._connection = await createConnection({
-                host: this.host,
-                user: this.user,
-                port: this.port,
-                password: String(password)
-            });
+    public async connect(password: string, maxRetries: number = 3): Promise<void> {
+        if (this.pool) return;
 
-            this._ready = true as Ready;
-        } catch (error) {
-            throw error;
+        const poolOptions: PoolOptions = {
+            host: this.options.host,
+            user: this.options.user,
+            port: this.options.port,
+            password,
+            database: this.options.database,
+            connectionLimit: this.options.connectionLimit ?? 10,
+            waitForConnections: true
+        };
+
+        let lastError: unknown;
+
+        for (let attempt: number = 1; attempt <= maxRetries; attempt++) {
+            const pool: Pool = createPool(poolOptions);
+
+            try {
+                const conn: PoolConnection = await pool.getConnection();
+                conn.release();
+
+                (pool as unknown as EventEmitter).on('error', (err: Error): void => {
+                    console.error('MySQL pool error:', err.message);
+                });
+
+                this.pool = pool;
+                return;
+            } catch (error) {
+                await pool.end();
+                lastError = error;
+
+                const code: string | undefined = (error as { code?: string }).code;
+
+                if (!code || !DatabaseConnection.RETRYABLE_CODES.has(code)) throw this.wrapConnectError(error);
+
+                if (attempt < maxRetries) {
+                    const delayMs: number = 500 * 2 ** (attempt - 1);
+                    await new Promise((resolve) => setTimeout(resolve, delayMs));
+                }
+            }
         }
+
+        throw this.wrapConnectError(lastError);
+    }
+
+    private wrapConnectError(error: unknown): DcbError {
+        const code: string | undefined = (error as { code?: string }).code;
+
+        if (code === 'ER_ACCESS_DENIED_ERROR') return new DcbError(DcbErrorCodes.DbAuthFailed, 'Invalid credentials');
+        if (code === 'ECONNREFUSED' || code === 'ENOTFOUND' || code === 'ETIMEDOUT') {
+            return new DcbError(DcbErrorCodes.DbConnectionFailed, `Could not reach database at ${this.options.host}:${this.options.port}`);
+        }
+
+        return new DcbError(DcbErrorCodes.DbConnectionFailed, (error as Error).message);
     }
 
     /**
      * If a connection is already established, it will be closed within this function.
      * @example
      * await db.disconnect();
-     * @see {@link Database.constructor Database initialization}
-     * @see {@link Database.login Database login}
+     * @see {@link DatabaseConnection.constructor Database initialization}
+     * @see {@link DatabaseConnection.connect Database connection}
      * @returns Promise<void>
      * */
     public async disconnect(): Promise<void> {
-        if (!this._ready) throw new Error('Database not ready');
-        if (!this._connection) throw new Error('Connection not established');
+        if (!this.pool) throw new DcbError(DcbErrorCodes.DbNotReady);
 
-        try {
-            await this._connection.end();
-            this._ready = false as Ready;
-        } catch (error) {
-            throw error;
-        }
+        await this.pool.end();
+        this.pool = undefined;
     }
 
     /**
      * Function to query some sql within the connected database.
-     * @param database The database to query.
      * @param sql The sql to query.
      * @param values The values to replace in the sql.
+     * @param timeout The timeout for the query in milliseconds. Default is 10 seconds.
      * @example
-     * await db.query('database_name', 'SELECT * FROM table WHERE id = ?', [1]);
+     * await db.query('SELECT * FROM table WHERE id = ?', [1]);
      *
-     * const result = await db.query('database_name', 'SELECT * FROM table WHERE id = ?', [1]) as RowDataPacket[];
-     * @see {@link Database.constructor Database initialization}
+     * const result = await db.query('SELECT * FROM table WHERE id = ?', [1]) as RowDataPacket[];
+     * @see {@link DatabaseConnection.constructor Database initialization}
+     * @see {@link DatabaseConnection.connect Database connection}
      * @returns The result of sql query.
      * */
-    public async query(database: string, sql: string, values?: any[]): Promise<QueryResult> {
-        if (!this._ready) throw new Error('Database not ready');
-        if (!this._connection) throw new Error('Connection not established');
+    public async query<T extends QueryResult = QueryResult>(sql: string, values?: any[], timeout: number = 10_000): Promise<T> {
+        if (!this.pool) throw new DcbError(DcbErrorCodes.DbNotReady);
 
-        try {
-            await this._connection.query(`USE \`${database}\``);
-            const [rows] = await this._connection.query(sql, values);
-            return rows;
-        } catch (error) {
-            throw error;
-        }
+        const [rows] = await this.pool.query<T>({sql, values, timeout});
+        return rows;
     }
 }

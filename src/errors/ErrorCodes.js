@@ -7,8 +7,11 @@ exports.ErrorCodes = void 0;
 var ErrorCodes;
 (function (ErrorCodes) {
     ErrorCodes["InvalidType"] = "InvalidType";
+    ErrorCodes["InvalidInput"] = "InvalidInput";
     ErrorCodes["MissingArgument"] = "MissingArgument";
     ErrorCodes["MissingEnv"] = "MissingEnv";
-    ErrorCodes["NotReady"] = "NotReady";
+    ErrorCodes["DbNotReady"] = "DbNotReady";
+    ErrorCodes["DbAuthFailed"] = "DbAuthFailed";
+    ErrorCodes["DbConnectionFailed"] = "DbConnectionFailed";
     ErrorCodes["FailedCall"] = "FailedCall";
 })(ErrorCodes || (exports.ErrorCodes = ErrorCodes = {}));

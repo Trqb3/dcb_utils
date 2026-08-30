@@ -1,67 +1,73 @@
-import { Connection, QueryResult } from 'mysql2/promise';
+import { QueryResult } from 'mysql2/promise';
 /**
  * Options for the Database class.
  * */
 export interface DatabaseOptions {
-    host: string | undefined;
-    user: string | undefined;
-    port: string | number | undefined;
+    host: string;
+    user: string;
+    port: number;
+    database: string;
+    connectionLimit?: number;
 }
 /**
  * Everything needed to interact with a MySQL database but simplified.
  * */
-export default class Database<Ready extends boolean = boolean> {
-    private readonly host;
-    private readonly user;
-    private readonly port;
-    _ready: Ready;
-    _connection: Connection | undefined;
+export default class DatabaseConnection {
+    private readonly options;
+    private pool;
     /**
      * Creates a new instance of the Database class.
      * @param options The options to connect to the database.
      * @example
-     * const db = new Database({
+     * const db = new DatabaseConnection({
      *     host: 'localhost',
      *     user: 'root',
      *     port: 3306,
+     *     database: 'my_database',
      * });
      * */
     constructor(options: DatabaseOptions);
     /**
-     * Basic request to check if the database connection is ready.
-     * @returns Whether the database is ready.
+     * Whether the database connection is initialized and ready to use.
+     * @returns boolean
      * */
-    get ready(): Ready;
+    get ready(): boolean;
+    private static readonly RETRYABLE_CODES;
     /**
      * Establishes a connection to the database.
      * @param password The password to connect to the database.
+     * @param maxRetries The maximum number of retries for connection attempts. Default is 3.
      * @example
-     * await db.login('password');
-     * @see {@link Database.constructor Database initialization}
-     * @see {@link Database.login Database login}
+     * await db.connect('password');
+     * @see {@link DatabaseConnection.constructor Database initialization}
+     * @see {@link DatabaseConnection.disconnect Database disconnection}
+     * @see {@link DatabaseConnection.query Database query}
+     * @see {@link DatabaseConnection.ready Database readiness}
      * @returns Promise<void>
      * */
-    login(password: string | undefined): Promise<void>;
+    connect(password: string, maxRetries?: number): Promise<void>;
+    private wrapConnectError;
     /**
      * If a connection is already established, it will be closed within this function.
      * @example
      * await db.disconnect();
-     * @see {@link Database.constructor Database initialization}
-     * @see {@link Database.login Database login}
+     * @see {@link DatabaseConnection.constructor Database initialization}
+     * @see {@link DatabaseConnection.connect Database connection}
      * @returns Promise<void>
      * */
     disconnect(): Promise<void>;
     /**
      * Function to query some sql within the connected database.
-     * @param database The database to query.
      * @param sql The sql to query.
      * @param values The values to replace in the sql.
+     * @param timeout The timeout for the query in milliseconds. Default is 10 seconds.
      * @example
-     * await db.query('database_name', 'SELECT * FROM table WHERE id = ?', [1]);
+     * await db.query('SELECT * FROM table WHERE id = ?', [1]);
      *
-     * const result = await db.query('database_name', 'SELECT * FROM table WHERE id = ?', [1]) as RowDataPacket[];
-     * @see {@link Database.constructor Database initialization}
+     * const result = await db.query('SELECT * FROM table WHERE id = ?', [1]) as RowDataPacket[];
+     * @see {@link DatabaseConnection.constructor Database initialization}
+     * @see {@link DatabaseConnection.connect Database connection}
      * @returns The result of sql query.
      * */
-    query(database: string, sql: string, values?: any[]): Promise<QueryResult>;
+    query<T extends QueryResult = QueryResult>(sql: string, values?: any[], timeout?: number): Promise<T>;
 }

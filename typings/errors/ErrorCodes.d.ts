@@ -3,8 +3,11 @@
  * */
 export declare enum ErrorCodes {
     InvalidType = "InvalidType",
+    InvalidInput = "InvalidInput",
     MissingArgument = "MissingArgument",
     MissingEnv = "MissingEnv",
-    NotReady = "NotReady",
+    DbNotReady = "DbNotReady",
+    DbAuthFailed = "DbAuthFailed",
+    DbConnectionFailed = "DbConnectionFailed",
     FailedCall = "FailedCall"
 }

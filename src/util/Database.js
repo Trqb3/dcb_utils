@@ -1,107 +1,131 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const promise_1 = require("mysql2/promise");
+const DcbError_1 = require("../errors/DcbError");
+const DB_NAME_PATTERN = /^[a-zA-Z0-9_]+$/;
 /**
  * Everything needed to interact with a MySQL database but simplified.
  * */
-class Database {
-    host;
-    user;
-    port;
-    _ready;
-    _connection;
+class DatabaseConnection {
+    options;
+    pool;
     /**
      * Creates a new instance of the Database class.
      * @param options The options to connect to the database.
      * @example
-     * const db = new Database({
+     * const db = new DatabaseConnection({
      *     host: 'localhost',
      *     user: 'root',
      *     port: 3306,
+     *     database: 'my_database',
      * });
      * */
     constructor(options) {
-        this.host = String(options.host);
-        this.user = String(options.user);
-        this.port = Number(options.port);
-        this._ready = false;
+        if (!DB_NAME_PATTERN.test(options.database))
+            throw new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.InvalidInput, 'Database name must only contain alphanumeric characters and underscores');
+        this.options = options;
     }
     /**
-     * Basic request to check if the database connection is ready.
-     * @returns Whether the database is ready.
+     * Whether the database connection is initialized and ready to use.
+     * @returns boolean
      * */
     get ready() {
-        return this._ready;
+        return this.pool !== undefined;
     }
+    static RETRYABLE_CODES = new Set([
+        'ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND', 'PROTOCOL_CONNECTION_LOST', 'ECONNRESET'
+    ]);
     /**
      * Establishes a connection to the database.
      * @param password The password to connect to the database.
+     * @param maxRetries The maximum number of retries for connection attempts. Default is 3.
      * @example
-     * await db.login('password');
-     * @see {@link Database.constructor Database initialization}
-     * @see {@link Database.login Database login}
+     * await db.connect('password');
+     * @see {@link DatabaseConnection.constructor Database initialization}
+     * @see {@link DatabaseConnection.disconnect Database disconnection}
+     * @see {@link DatabaseConnection.query Database query}
+     * @see {@link DatabaseConnection.ready Database readiness}
      * @returns Promise<void>
      * */
-    async login(password) {
-        try {
-            this._connection = await (0, promise_1.createConnection)({
-                host: this.host,
-                user: this.user,
-                port: this.port,
-                password: String(password)
-            });
-            this._ready = true;
+    async connect(password, maxRetries = 3) {
+        if (this.pool)
+            return;
+        const poolOptions = {
+            host: this.options.host,
+            user: this.options.user,
+            port: this.options.port,
+            password,
+            database: this.options.database,
+            connectionLimit: this.options.connectionLimit ?? 10,
+            waitForConnections: true
+        };
+        let lastError;
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            const pool = (0, promise_1.createPool)(poolOptions);
+            try {
+                const conn = await pool.getConnection();
+                conn.release();
+                pool.on('error', (err) => {
+                    console.error('MySQL pool error:', err.message);
+                });
+                this.pool = pool;
+                return;
+            }
+            catch (error) {
+                await pool.end();
+                lastError = error;
+                const code = error.code;
+                if (!code || !DatabaseConnection.RETRYABLE_CODES.has(code))
+                    throw this.wrapConnectError(error);
+                if (attempt < maxRetries) {
+                    const delayMs = 500 * 2 ** (attempt - 1);
+                    await new Promise((resolve) => setTimeout(resolve, delayMs));
+                }
+            }
         }
-        catch (error) {
-            throw error;
+        throw this.wrapConnectError(lastError);
+    }
+    wrapConnectError(error) {
+        const code = error.code;
+        if (code === 'ER_ACCESS_DENIED_ERROR')
+            return new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.DbAuthFailed, 'Invalid credentials');
+        if (code === 'ECONNREFUSED' || code === 'ENOTFOUND' || code === 'ETIMEDOUT') {
+            return new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.DbConnectionFailed, `Could not reach database at ${this.options.host}:${this.options.port}`);
         }
+        return new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.DbConnectionFailed, error.message);
     }
     /**
      * If a connection is already established, it will be closed within this function.
      * @example
      * await db.disconnect();
-     * @see {@link Database.constructor Database initialization}
-     * @see {@link Database.login Database login}
+     * @see {@link DatabaseConnection.constructor Database initialization}
+     * @see {@link DatabaseConnection.connect Database connection}
      * @returns Promise<void>
      * */
     async disconnect() {
-        if (!this._ready)
-            throw new Error('Database not ready');
-        if (!this._connection)
-            throw new Error('Connection not established');
-        try {
-            await this._connection.end();
-            this._ready = false;
-        }
-        catch (error) {
-            throw error;
-        }
+        if (!this.pool)
+            throw new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.DbNotReady);
+        await this.pool.end();
+        this.pool = undefined;
     }
     /**
      * Function to query some sql within the connected database.
-     * @param database The database to query.
      * @param sql The sql to query.
      * @param values The values to replace in the sql.
+     * @param timeout The timeout for the query in milliseconds. Default is 10 seconds.
      * @example
-     * await db.query('database_name', 'SELECT * FROM table WHERE id = ?', [1]);
+     * await db.query('SELECT * FROM table WHERE id = ?', [1]);
      *
-     * const result = await db.query('database_name', 'SELECT * FROM table WHERE id = ?', [1]) as RowDataPacket[];
-     * @see {@link Database.constructor Database initialization}
+     * const result = await db.query('SELECT * FROM table WHERE id = ?', [1]) as RowDataPacket[];
+     * @see {@link DatabaseConnection.constructor Database initialization}
+     * @see {@link DatabaseConnection.connect Database connection}
      * @returns The result of sql query.
      * */
-    async query(database, sql, values) {
-        if (!this._ready)
-            throw new Error('Database not ready');
-        if (!this._connection)
-            throw new Error('Connection not established');
-        try {
-            await this._connection.query(`USE \`${database}\``);
-            const [rows] = await this._connection.query(sql, values);
-            return rows;
-        }
-        catch (error) {
-            throw error;
-        }
+    async query(sql, values, timeout = 10_000) {
+        if (!this.pool)
+            throw new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.DbNotReady);
+        const [rows] = await this.pool.query({ sql, values, timeout });
+        return rows;
     }
 }
-exports.default = Database;
+exports.default = DatabaseConnection;

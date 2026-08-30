@@ -7,8 +7,11 @@ const ErrorCodes_1 = require("./ErrorCodes");
  * */
 exports.ErrorMessages = {
     [ErrorCodes_1.ErrorCodes.InvalidType]: 'Provided type is invalid',
+    [ErrorCodes_1.ErrorCodes.InvalidInput]: 'Invalid input',
     [ErrorCodes_1.ErrorCodes.MissingArgument]: 'Missing required argument',
     [ErrorCodes_1.ErrorCodes.MissingEnv]: 'Missing required environment variable',
-    [ErrorCodes_1.ErrorCodes.NotReady]: 'Not ready',
+    [ErrorCodes_1.ErrorCodes.DbNotReady]: 'Database is not ready',
+    [ErrorCodes_1.ErrorCodes.DbAuthFailed]: 'Database authentication failed',
+    [ErrorCodes_1.ErrorCodes.DbConnectionFailed]: 'Database connection failed',
     [ErrorCodes_1.ErrorCodes.FailedCall]: 'Failed to call function',
 };

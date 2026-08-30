@@ -11,6 +11,6 @@ export { default as SkyBlockEvents } from "./skyblock/Events";
 export { default as SkyBlockTime } from "./skyblock/Time";
 
 // Util
-export { default as Database } from "./util/Database";
+export { default as DatabaseConnection } from "./util/Database";
 export { default as Logger } from "./util/Logger";
 export { validateEnv } from "./util/Env";
