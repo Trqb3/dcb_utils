@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const promise_1 = require("mysql2/promise");
 const DcbError_1 = require("../errors/DcbError");
-const DB_NAME_PATTERN = /^[a-zA-Z0-9_]+$/;
+const DB_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
 /**
  * Everything needed to interact with a MySQL database but simplified.
  * */

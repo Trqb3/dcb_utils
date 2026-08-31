@@ -13,7 +13,7 @@ export interface DatabaseOptions {
     connectionLimit?: number;
 }
 
-const DB_NAME_PATTERN = /^[a-zA-Z0-9_]+$/;
+const DB_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
 /**
  * Everything needed to interact with a MySQL database but simplified.
