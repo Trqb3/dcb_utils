@@ -1,18 +1,19 @@
 {
   "compilerOptions": {
     "target": "ES2024",
-    "module": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "declarationMap": false,
     "declarationDir": "typings",
     "emitDeclarationOnly": false,
+    "allowJs": true,
     "strict": true,
     "skipLibCheck": true,
     "outDir": "src",
-    "rootDir": "src-ts",
-    "allowJs": true
+    "rootDir": "src-ts"
   },
   "include": ["src-ts/**/*.ts"],
   "exclude": ["node_modules", "typings", "src"]

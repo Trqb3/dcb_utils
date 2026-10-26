@@ -1,9 +1,10 @@
 {
   "name": "@trqb3/dcb-utils",
-  "version": "3.3.19",
+  "version": "3.3.20",
   "description": "Discord Bot Utils for Standard and Hypixel SkyBlock based Discord Bots",
   "main": "./src/index.js",
   "types": "./typings/index.d.ts",
+  "type": "module",
   "scripts": {
     "build": "tsc"
   },
