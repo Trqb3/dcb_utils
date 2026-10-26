@@ -30,11 +30,9 @@ export interface EventOptions {
     testServer?: string;
 }
 
-
 /**
- * Constructs an EventHandler instance that manages Discord events and command interactions.
- * @param {EventOptions} options - Configuration options for the EventHandler.
- * @constructor
+ * Manages Discord events and command interactions.
+ * Use `await EventHandler.create(options)` instead of `new`.
  */
 export default class EventHandler {
     public dir: string;
@@ -46,22 +44,16 @@ export default class EventHandler {
     public readonly useDefaultCommandInteractionHandler: boolean;
     private readonly eventFolders: Dirent[];
 
-    constructor(options: EventOptions) {
+    private constructor(options: EventOptions, commandManager: CommandManager) {
         this.dir = join(options.dir, 'events');
         this.client = options.client;
         this.logger = options.logger;
         this.devs = options.devs ?? [];
         this.testServer = options.testServer;
+        this.commandManager = commandManager;
 
         this.useDefaultCommandInteractionHandler =
             options.useDefaultCommandInteractionHandler ?? true;
-
-        this.commandManager = new CommandManager({
-            dir: options.commandsDir ?? options.dir,
-            client: this.client,
-            logger: this.logger,
-            exceptions: options.commandExceptions
-        });
 
         mkdirSync(this.dir, { recursive: true });
         mkdirSync(join(this.dir, 'clientReady'), { recursive: true });
@@ -86,6 +78,17 @@ export default class EventHandler {
         this.registerEvents();
     }
 
+    public static async create(options: EventOptions): Promise<EventHandler> {
+        const commandManager: CommandManager = await CommandManager.create({
+            dir: options.commandsDir ?? options.dir,
+            client: options.client,
+            logger: options.logger,
+            exceptions: options.commandExceptions
+        });
+
+        return new EventHandler(options, commandManager);
+    }
+
     private registerEvents(): void {
         for (const folder of this.eventFolders) {
             const fm = new FileManager();
@@ -94,13 +97,13 @@ export default class EventHandler {
             const path: string = join(this.dir, name);
             const files: Dirent[] = fm.get(path, true);
 
-            files.sort((a: Dirent, b: Dirent): 1 | -1 => (a > b ? 1 : -1));
+            files.sort((a: Dirent, b: Dirent): number => a.name.localeCompare(b.name));
 
             if (name) {
                 const eventHandler = async (arg: ClientEvents[typeof argName]): Promise<void> => {
                     for (const file of files) {
                         const { default: eventFunction } = await import(pathToFileURL(join(path, file.name)).href);
-                        await (await eventFunction)(arg, this.client, this.logger, this.commandManager);
+                        await eventFunction(arg, this.client, this.logger, this.commandManager);
                     }
                 };
 

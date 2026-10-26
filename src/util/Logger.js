@@ -1,14 +1,12 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const fs_1 = require("fs");
-const path_1 = require("path");
+import { existsSync, mkdirSync, appendFileSync, openSync, fsyncSync, closeSync } from 'fs';
+import { join } from 'path';
 /**
  * Creates a new instance of the Logger class.
  * @param dir The directory to store the log files.
  * @example
  * const logger = new Logger('./logs');
  * */
-class Logger {
+export default class Logger {
     dir;
     levels;
     _ready;
@@ -34,8 +32,8 @@ class Logger {
      * logger.init();
      * */
     init() {
-        if (!(0, fs_1.existsSync)(this.dir))
-            (0, fs_1.mkdirSync)(this.dir);
+        if (!existsSync(this.dir))
+            mkdirSync(this.dir);
         this.updateFilePath();
         this._ready = true;
     }
@@ -44,10 +42,10 @@ class Logger {
         if (this.currentDate !== newDate) {
             this.currentDate = newDate;
             const fileName = `${this.currentDate}.log`;
-            this.filePath = (0, path_1.join)(this.dir, fileName);
-            if (!(0, fs_1.existsSync)(this.filePath)) {
-                const fd = (0, fs_1.openSync)(this.filePath, 'w');
-                (0, fs_1.closeSync)(fd);
+            this.filePath = join(this.dir, fileName);
+            if (!existsSync(this.filePath)) {
+                const fd = openSync(this.filePath, 'w');
+                closeSync(fd);
             }
         }
     }
@@ -66,10 +64,10 @@ class Logger {
             if (!logLevel)
                 throw new Error('Invalid log level');
             const logMessage = `${timestamp} - [${logLevel}] - ${message} ${details ? `- (${details})` : ''}`;
-            const fd = (0, fs_1.openSync)(this.filePath, 'a');
-            (0, fs_1.appendFileSync)(fd, `${logMessage}\n`, 'utf-8');
-            (0, fs_1.fsyncSync)(fd);
-            (0, fs_1.closeSync)(fd);
+            const fd = openSync(this.filePath, 'a');
+            appendFileSync(fd, `${logMessage}\n`, 'utf-8');
+            fsyncSync(fd);
+            closeSync(fd);
             console.log(logMessage);
         }
         catch (error) {
@@ -77,4 +75,3 @@ class Logger {
         }
     }
 }
-exports.default = Logger;

@@ -1,12 +1,10 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const promise_1 = require("mysql2/promise");
-const DcbError_1 = require("../errors/DcbError");
+import { createPool } from 'mysql2/promise';
+import { DcbError, DcbErrorCodes } from '../errors/DcbError';
 const DB_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
 /**
  * Everything needed to interact with a MySQL database but simplified.
  * */
-class DatabaseConnection {
+export default class DatabaseConnection {
     options;
     pool;
     /**
@@ -22,7 +20,7 @@ class DatabaseConnection {
      * */
     constructor(options) {
         if (!DB_NAME_PATTERN.test(options.database))
-            throw new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.InvalidInput, 'Database name must only contain alphanumeric characters and underscores');
+            throw new DcbError(DcbErrorCodes.InvalidInput, 'Database name must only contain alphanumeric characters and underscores');
         this.options = options;
     }
     /**
@@ -61,7 +59,7 @@ class DatabaseConnection {
         };
         let lastError;
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            const pool = (0, promise_1.createPool)(poolOptions);
+            const pool = createPool(poolOptions);
             try {
                 const conn = await pool.getConnection();
                 conn.release();
@@ -88,11 +86,11 @@ class DatabaseConnection {
     wrapConnectError(error) {
         const code = error.code;
         if (code === 'ER_ACCESS_DENIED_ERROR')
-            return new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.DbAuthFailed, 'Invalid credentials');
+            return new DcbError(DcbErrorCodes.DbAuthFailed, 'Invalid credentials');
         if (code === 'ECONNREFUSED' || code === 'ENOTFOUND' || code === 'ETIMEDOUT') {
-            return new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.DbConnectionFailed, `Could not reach database at ${this.options.host}:${this.options.port}`);
+            return new DcbError(DcbErrorCodes.DbConnectionFailed, `Could not reach database at ${this.options.host}:${this.options.port}`);
         }
-        return new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.DbConnectionFailed, error.message);
+        return new DcbError(DcbErrorCodes.DbConnectionFailed, error.message);
     }
     /**
      * If a connection is already established, it will be closed within this function.
@@ -104,7 +102,7 @@ class DatabaseConnection {
      * */
     async disconnect() {
         if (!this.pool)
-            throw new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.DbNotReady);
+            throw new DcbError(DcbErrorCodes.DbNotReady);
         await this.pool.end();
         this.pool = undefined;
     }
@@ -123,9 +121,8 @@ class DatabaseConnection {
      * */
     async query(sql, values, timeout = 10_000) {
         if (!this.pool)
-            throw new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.DbNotReady);
+            throw new DcbError(DcbErrorCodes.DbNotReady);
         const [rows] = await this.pool.query({ sql, values, timeout });
         return rows;
     }
 }
-exports.default = DatabaseConnection;

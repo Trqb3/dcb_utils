@@ -1,49 +1,49 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const path_1 = require("path");
-const FileManager_1 = __importDefault(require("../util/FileManager"));
-const fs_1 = require("fs");
+import { join } from "path";
+import FileManager from "../util/FileManager";
+import { mkdirSync } from "fs";
+import { pathToFileURL } from "url";
 /**
  * Main class for handling commands within a discord bot
  * @param options - The options for the command manager
  */
-class CommandManager {
+export default class CommandManager {
     dir;
     client;
     logger;
     exceptions;
     commands;
     constructor(options) {
-        this.dir = (0, path_1.join)(options.dir, 'commands');
+        this.dir = join(options.dir, 'commands');
         this.client = options.client;
         this.logger = options.logger;
         this.exceptions = options.exceptions;
-        (0, fs_1.mkdirSync)(this.dir, { recursive: true });
-        (0, fs_1.mkdirSync)((0, path_1.join)(this.dir, 'default'), { recursive: true });
+        mkdirSync(this.dir, { recursive: true });
+        mkdirSync(join(this.dir, 'default'), { recursive: true });
         this.commands = {
             local: new Map(),
             application: new Map()
         };
-        this.fetchLocalCommands();
+    }
+    static async create(options) {
+        const manager = new CommandManager(options);
+        await manager.fetchLocalCommands();
+        return manager;
     }
     /**
      * Fetches all local commands from the specified directory and stores them in the commands map.
      * @returns {void}
      * */
-    fetchLocalCommands() {
-        const fm = new FileManager_1.default();
+    async fetchLocalCommands() {
+        const fm = new FileManager();
         const cmdCats = fm.get(this.dir, true);
         for (const cat of cmdCats) {
             const catName = cat.name;
-            const catPath = (0, path_1.join)(this.dir, catName);
+            const catPath = join(this.dir, catName);
             const files = fm.get(catPath, true);
             for (const file of files) {
                 const fileName = file.name;
-                const filePath = (0, path_1.join)(catPath, fileName);
-                const command = require(filePath).default;
+                const filePath = join(catPath, fileName);
+                const command = (await import(pathToFileURL(filePath).href)).default;
                 if (this.exceptions?.includes(command.name))
                     continue;
                 this.commands.local.set(command.name, command);
@@ -158,4 +158,3 @@ class CommandManager {
         }
     }
 }
-exports.default = CommandManager;

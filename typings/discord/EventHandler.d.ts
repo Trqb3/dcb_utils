@@ -24,9 +24,8 @@ export interface EventOptions {
     testServer?: string;
 }
 /**
- * Constructs an EventHandler instance that manages Discord events and command interactions.
- * @param {EventOptions} options - Configuration options for the EventHandler.
- * @constructor
+ * Manages Discord events and command interactions.
+ * Use `await EventHandler.create(options)` instead of `new`.
  */
 export default class EventHandler {
     dir: string;
@@ -37,7 +36,8 @@ export default class EventHandler {
     testServer?: string;
     readonly useDefaultCommandInteractionHandler: boolean;
     private readonly eventFolders;
-    constructor(options: EventOptions);
+    private constructor();
+    static create(options: EventOptions): Promise<EventHandler>;
     private registerEvents;
     private handleCommandInteraction;
 }

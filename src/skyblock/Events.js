@@ -1,5 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Creates a new instance of SkyBlockEvents.
  * @param config The configuration for the event.
@@ -7,7 +5,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * const event = new SkyBlockEvents({ key: 'event1', name: 'Event 1', pre_ping: 60, duration: 3600 });
  * @returns The new SkyBlockEvents instance.
  * */
-class SkyBlockEvents {
+export default class SkyBlockEvents {
     config;
     constructor(config) {
         this.config = config;
@@ -30,4 +28,3 @@ class SkyBlockEvents {
         return matches.every(Boolean);
     }
 }
-exports.default = SkyBlockEvents;

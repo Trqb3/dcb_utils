@@ -1,20 +1,14 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const discord_js_1 = require("discord.js");
-const FileManager_1 = __importDefault(require("../util/FileManager"));
-const CommandManager_1 = __importDefault(require("./CommandManager"));
-const path_1 = require("path");
-const fs_1 = require("fs");
-const url_1 = require("url");
+import { MessageFlagsBitField } from 'discord.js';
+import FileManager from '../util/FileManager';
+import CommandManager from "./CommandManager";
+import { join } from 'path';
+import { mkdirSync } from 'fs';
+import { pathToFileURL } from "url";
 /**
- * Constructs an EventHandler instance that manages Discord events and command interactions.
- * @param {EventOptions} options - Configuration options for the EventHandler.
- * @constructor
+ * Manages Discord events and command interactions.
+ * Use `await EventHandler.create(options)` instead of `new`.
  */
-class EventHandler {
+export default class EventHandler {
     dir;
     client;
     logger;
@@ -23,23 +17,18 @@ class EventHandler {
     testServer;
     useDefaultCommandInteractionHandler;
     eventFolders;
-    constructor(options) {
-        this.dir = (0, path_1.join)(options.dir, 'events');
+    constructor(options, commandManager) {
+        this.dir = join(options.dir, 'events');
         this.client = options.client;
         this.logger = options.logger;
         this.devs = options.devs ?? [];
         this.testServer = options.testServer;
+        this.commandManager = commandManager;
         this.useDefaultCommandInteractionHandler =
             options.useDefaultCommandInteractionHandler ?? true;
-        this.commandManager = new CommandManager_1.default({
-            dir: options.commandsDir ?? options.dir,
-            client: this.client,
-            logger: this.logger,
-            exceptions: options.commandExceptions
-        });
-        (0, fs_1.mkdirSync)(this.dir, { recursive: true });
-        (0, fs_1.mkdirSync)((0, path_1.join)(this.dir, 'clientReady'), { recursive: true });
-        const fm = new FileManager_1.default();
+        mkdirSync(this.dir, { recursive: true });
+        mkdirSync(join(this.dir, 'clientReady'), { recursive: true });
+        const fm = new FileManager();
         this.eventFolders = fm.get(this.dir, true);
         this.client.once('clientReady', async () => {
             await this.commandManager.registerCommands();
@@ -50,19 +39,28 @@ class EventHandler {
         });
         this.registerEvents();
     }
+    static async create(options) {
+        const commandManager = await CommandManager.create({
+            dir: options.commandsDir ?? options.dir,
+            client: options.client,
+            logger: options.logger,
+            exceptions: options.commandExceptions
+        });
+        return new EventHandler(options, commandManager);
+    }
     registerEvents() {
         for (const folder of this.eventFolders) {
-            const fm = new FileManager_1.default();
+            const fm = new FileManager();
             const name = folder.name;
             const argName = folder.name;
-            const path = (0, path_1.join)(this.dir, name);
+            const path = join(this.dir, name);
             const files = fm.get(path, true);
-            files.sort((a, b) => (a > b ? 1 : -1));
+            files.sort((a, b) => a.name.localeCompare(b.name));
             if (name) {
                 const eventHandler = async (arg) => {
                     for (const file of files) {
-                        const { default: eventFunction } = await import((0, url_1.pathToFileURL)((0, path_1.join)(path, file.name)).href);
-                        await (await eventFunction)(arg, this.client, this.logger, this.commandManager);
+                        const { default: eventFunction } = await import(pathToFileURL(join(path, file.name)).href);
+                        await eventFunction(arg, this.client, this.logger, this.commandManager);
                     }
                 };
                 this.client.on(String(name), eventHandler);
@@ -80,13 +78,13 @@ class EventHandler {
         try {
             if (command.devOnly && !this.devs.includes(interaction.user.id)) {
                 await interaction.reply({ content: 'This command is only available to developers.',
-                    flags: discord_js_1.MessageFlagsBitField.Flags.Ephemeral
+                    flags: MessageFlagsBitField.Flags.Ephemeral
                 });
                 return;
             }
             if (command.testOnly && interaction.guildId !== this.testServer) {
                 await interaction.reply({ content: 'This command is only available in the test server.',
-                    flags: discord_js_1.MessageFlagsBitField.Flags.Ephemeral
+                    flags: MessageFlagsBitField.Flags.Ephemeral
                 });
                 return;
             }
@@ -94,7 +92,7 @@ class EventHandler {
                 for (const permission of command.permissionsRequired) {
                     if (!interaction.memberPermissions?.has(permission)) {
                         await interaction.reply({ content: 'You do not have the required permissions to use this command.',
-                            flags: discord_js_1.MessageFlagsBitField.Flags.Ephemeral
+                            flags: MessageFlagsBitField.Flags.Ephemeral
                         });
                         return;
                     }
@@ -107,7 +105,7 @@ class EventHandler {
                 for (const permission of command.botPermissions) {
                     if (!bot?.permissions.has(permission)) {
                         await interaction.reply({ content: 'I do not have the required permissions to execute this command.',
-                            flags: discord_js_1.MessageFlagsBitField.Flags.Ephemeral
+                            flags: MessageFlagsBitField.Flags.Ephemeral
                         });
                         return;
                     }
@@ -120,4 +118,3 @@ class EventHandler {
         }
     }
 }
-exports.default = EventHandler;

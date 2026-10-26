@@ -13,6 +13,7 @@ import { join } from "path";
 import FileManager from "../util/FileManager";
 import Logger from "../util/Logger";
 import { mkdirSync, Dirent } from "fs";
+import { pathToFileURL } from "url";
 
 
 /**
@@ -92,7 +93,7 @@ export default class CommandManager {
         application: Map<string, any>
     };
 
-    constructor(options: CommandManagerOptions) {
+    private constructor(options: CommandManagerOptions) {
         this.dir = join(options.dir, 'commands');
         this.client = options.client;
         this.logger = options.logger;
@@ -105,15 +106,19 @@ export default class CommandManager {
             local: new Map(),
             application: new Map()
         };
+    }
 
-        this.fetchLocalCommands();
+    public static async create(options: CommandManagerOptions): Promise<CommandManager> {
+        const manager = new CommandManager(options);
+        await manager.fetchLocalCommands();
+        return manager;
     }
 
     /**
      * Fetches all local commands from the specified directory and stores them in the commands map.
      * @returns {void}
      * */
-    private fetchLocalCommands(): void {
+    private async fetchLocalCommands(): Promise<void> {
         const fm = new FileManager();
         const cmdCats: Dirent[] = fm.get(this.dir, true);
 
@@ -125,7 +130,7 @@ export default class CommandManager {
             for (const file of files) {
                 const fileName: string = file.name;
                 const filePath: string = join(catPath, fileName);
-                const command: Command = require(filePath).default;
+                const command: Command = (await import(pathToFileURL(filePath).href)).default;
 
                 if (this.exceptions?.includes(command.name)) continue;
 

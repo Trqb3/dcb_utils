@@ -1,9 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.SkyBlockMonths = void 0;
-const events_1 = require("events");
-const DcbError_1 = require("../errors/DcbError");
-var SkyBlockMonths;
+import { EventEmitter } from 'events';
+import { DcbError, DcbTypeError, DcbErrorCodes } from '../errors/DcbError';
+export var SkyBlockMonths;
 (function (SkyBlockMonths) {
     SkyBlockMonths[SkyBlockMonths["EarlySpring"] = 1] = "EarlySpring";
     SkyBlockMonths[SkyBlockMonths["Spring"] = 2] = "Spring";
@@ -17,7 +14,7 @@ var SkyBlockMonths;
     SkyBlockMonths[SkyBlockMonths["EarlyWinter"] = 10] = "EarlyWinter";
     SkyBlockMonths[SkyBlockMonths["Winter"] = 11] = "Winter";
     SkyBlockMonths[SkyBlockMonths["LateWinter"] = 12] = "LateWinter";
-})(SkyBlockMonths || (exports.SkyBlockMonths = SkyBlockMonths = {}));
+})(SkyBlockMonths || (SkyBlockMonths = {}));
 const sbMonths = [
     SkyBlockMonths.EarlySpring,
     SkyBlockMonths.Spring,
@@ -35,7 +32,7 @@ const sbMonths = [
 /**
  * Base class for the SkyBlock Time system calculations.
  * */
-class Time extends events_1.EventEmitter {
+export default class Time extends EventEmitter {
     static SB_EPOCH_MS = 1560275700000;
     static MS_PER_YEAR = 446400000;
     static MS_PER_MONTH = 37200000;
@@ -68,7 +65,7 @@ class Time extends events_1.EventEmitter {
      * */
     get(date) {
         if (!date)
-            throw new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.MissingArgument, 'date');
+            throw new DcbError(DcbErrorCodes.MissingArgument, 'date');
         const poch = date.getTime() - Time.SB_EPOCH_MS;
         const sbYear = Math.floor(poch / Time.MS_PER_YEAR) + 1;
         const sbMonth = Math.floor(poch / Time.MS_PER_MONTH) % Time.MONTHS_PER_YEAR;
@@ -128,11 +125,11 @@ class Time extends events_1.EventEmitter {
      * */
     on(eventName, listener) {
         if (!eventName)
-            throw new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.MissingArgument, 'eventName');
+            throw new DcbError(DcbErrorCodes.MissingArgument, 'eventName');
         if (typeof eventName !== 'string')
-            throw new DcbError_1.DcbTypeError(DcbError_1.DcbErrorCodes.InvalidType, 'eventName', 'string');
+            throw new DcbTypeError(DcbErrorCodes.InvalidType, 'eventName', 'string');
         if (!listener)
-            throw new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.MissingArgument, 'listener');
+            throw new DcbError(DcbErrorCodes.MissingArgument, 'listener');
         super.on(eventName, listener);
         if (eventName === 'change' && this.listenerCount('change') === 1) {
             this.scheduleNextChange();
@@ -171,9 +168,9 @@ class Time extends events_1.EventEmitter {
      * */
     recalculate(sbTime, sbMinutes, negative = false) {
         if (!sbTime)
-            throw new DcbError_1.DcbError(DcbError_1.DcbErrorCodes.MissingArgument, 'sbTime');
+            throw new DcbError(DcbErrorCodes.MissingArgument, 'sbTime');
         if (typeof sbTime !== 'object')
-            throw new DcbError_1.DcbTypeError(DcbError_1.DcbErrorCodes.InvalidType, 'sbTime', 'object');
+            throw new DcbTypeError(DcbErrorCodes.InvalidType, 'sbTime', 'object');
         const totalMinutes = sbTime.hour * Time.MINUTES_PER_HOUR +
             sbTime.minute * Time.MINUTES_PER_TICK +
             (negative ? -sbMinutes : sbMinutes);
@@ -217,4 +214,3 @@ class Time extends events_1.EventEmitter {
         return sbTime;
     }
 }
-exports.default = Time;

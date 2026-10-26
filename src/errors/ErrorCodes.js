@@ -1,10 +1,7 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ErrorCodes = void 0;
 /**
  * The error codes for DcbError.
  * */
-var ErrorCodes;
+export var ErrorCodes;
 (function (ErrorCodes) {
     ErrorCodes["InvalidType"] = "InvalidType";
     ErrorCodes["InvalidInput"] = "InvalidInput";
@@ -14,4 +11,4 @@ var ErrorCodes;
     ErrorCodes["DbAuthFailed"] = "DbAuthFailed";
     ErrorCodes["DbConnectionFailed"] = "DbConnectionFailed";
     ErrorCodes["FailedCall"] = "FailedCall";
-})(ErrorCodes || (exports.ErrorCodes = ErrorCodes = {}));
+})(ErrorCodes || (ErrorCodes = {}));

@@ -51,7 +51,8 @@ export default class CommandManager {
         local: Map<string, any>;
         application: Map<string, any>;
     };
-    constructor(options: CommandManagerOptions);
+    private constructor();
+    static create(options: CommandManagerOptions): Promise<CommandManager>;
     /**
      * Fetches all local commands from the specified directory and stores them in the commands map.
      * @returns {void}
