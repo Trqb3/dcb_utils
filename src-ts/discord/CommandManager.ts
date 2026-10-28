@@ -241,14 +241,14 @@ export default class CommandManager {
 
                             this.logger.write(0, `🔄 Command "${name}" updated`);
                         } else {
-                            this.logger.write(0, `⏭️ Command "${name}" unchanged`);
+                            this.logger.write(3, `⏭️ Command "${name}" unchanged`);
                         }
 
                         continue;
                     }
 
                     if (localCommand.deleted) {
-                        this.logger.write(0, `⏭️ Command "${name}" skipped`);
+                        this.logger.write(3, `⏭️ Command "${name}" skipped`);
 
                         continue;
                     }
