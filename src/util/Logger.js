@@ -15,6 +15,12 @@ export default class Logger {
     _ready;
     filePath;
     currentDate;
+    static LEVEL_LOOKUP = new Map([
+        ['debug', 0 /* LogLevel.Debug */],
+        ['info', 1 /* LogLevel.Info */],
+        ['warn', 2 /* LogLevel.Warn */],
+        ['error', 3 /* LogLevel.Error */]
+    ]);
     constructor(dir, options = {}) {
         this.dir = dir;
         this.levels = new Map().set(0, 'DEBUG').set(1, 'INFO').set(2, 'WARN').set(3, 'ERROR');
@@ -22,6 +28,43 @@ export default class Logger {
         this._ready = false;
         this.filePath = '';
         this.currentDate = '';
+    }
+    /**
+     * Parses a log level name (case-insensitive) into a {@link LogLevel}.
+     * Missing or invalid values result in the fallback, invalid ones additionally log a warning.
+     * @param value The string to parse, e.g. `process.env.LOG_LEVEL`.
+     * @param fallback The level to use if the value is missing or invalid. Default is {@link LogLevel.Info}.
+     * @example
+     * Logger.parseLevel('WARN'); // LogLevel.Warn
+     * Logger.parseLevel(undefined, LogLevel.Debug); // LogLevel.Debug
+     * @see {@link Logger.fromEnv Logger creation via environment variable}
+     * @returns The parsed log level.
+     * */
+    static parseLevel(value, fallback = 1 /* LogLevel.Info */) {
+        if (!value || !value.trim())
+            return fallback;
+        const level = Logger.LEVEL_LOOKUP.get(value.trim().toLowerCase());
+        if (level === undefined) {
+            console.warn(`Invalid log level "${value}", using fallback. Valid values: ${[...Logger.LEVEL_LOOKUP.keys()].join(', ')}`);
+            return fallback;
+        }
+        return level;
+    }
+    /**
+     * Creates a new logger whose minimum log level is read from an environment variable.
+     * Remember to call {@link Logger.init} afterwards.
+     * @param dir The directory to store the log files.
+     * @param envVar The name of the environment variable. Default is `LOG_LEVEL`.
+     * @param fallback The level to use if the variable is missing or invalid. Default is {@link LogLevel.Info}.
+     * @example
+     * // .env: LOG_LEVEL=warn
+     * const logger = Logger.fromEnv('./logs');
+     * logger.init();
+     * @see {@link Logger.parseLevel Log level parsing}
+     * @returns A new Logger instance.
+     * */
+    static fromEnv(dir, envVar = 'LOG_LEVEL', fallback = 1 /* LogLevel.Info */) {
+        return new Logger(dir, { minLevel: Logger.parseLevel(process.env[envVar], fallback) });
     }
     /**
      * Basic request to check if the database connection is ready.

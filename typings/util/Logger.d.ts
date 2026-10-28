@@ -1,4 +1,4 @@
-declare const enum LogLevel {
+export declare const enum LogLevel {
     Debug = 0,
     Info = 1,
     Warn = 2,
@@ -26,7 +26,34 @@ export default class Logger<Ready extends boolean = boolean> {
     _ready: Ready;
     private filePath;
     private currentDate;
+    private static readonly LEVEL_LOOKUP;
     constructor(dir: string, options?: LoggerOptions);
+    /**
+     * Parses a log level name (case-insensitive) into a {@link LogLevel}.
+     * Missing or invalid values result in the fallback, invalid ones additionally log a warning.
+     * @param value The string to parse, e.g. `process.env.LOG_LEVEL`.
+     * @param fallback The level to use if the value is missing or invalid. Default is {@link LogLevel.Info}.
+     * @example
+     * Logger.parseLevel('WARN'); // LogLevel.Warn
+     * Logger.parseLevel(undefined, LogLevel.Debug); // LogLevel.Debug
+     * @see {@link Logger.fromEnv Logger creation via environment variable}
+     * @returns The parsed log level.
+     * */
+    static parseLevel(value: string | undefined, fallback?: LogLevel): LogLevel;
+    /**
+     * Creates a new logger whose minimum log level is read from an environment variable.
+     * Remember to call {@link Logger.init} afterwards.
+     * @param dir The directory to store the log files.
+     * @param envVar The name of the environment variable. Default is `LOG_LEVEL`.
+     * @param fallback The level to use if the variable is missing or invalid. Default is {@link LogLevel.Info}.
+     * @example
+     * // .env: LOG_LEVEL=warn
+     * const logger = Logger.fromEnv('./logs');
+     * logger.init();
+     * @see {@link Logger.parseLevel Log level parsing}
+     * @returns A new Logger instance.
+     * */
+    static fromEnv(dir: string, envVar?: string, fallback?: LogLevel): Logger;
     /**
      * Basic request to check if the database connection is ready.
      * @returns Whether the database is ready.
@@ -72,4 +99,3 @@ export default class Logger<Ready extends boolean = boolean> {
      * */
     debug(message: string, details?: unknown): void;
 }
-export {};
