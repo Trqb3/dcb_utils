@@ -1,6 +1,5 @@
-import { QueryResult, Pool, PoolOptions, PoolConnection, createPool } from 'mysql2/promise';
-import { DcbError, DcbErrorCodes } from '../errors/DcbError';
-import { EventEmitter } from 'events';
+import { Pool, PoolClient, PoolConfig, QueryConfig, QueryResult, QueryResultRow } from 'pg';
+import { DcbError, DcbErrorCodes } from '../../errors/DcbError';
 
 /**
  * Options for the Database class.
@@ -16,7 +15,7 @@ export interface DatabaseOptions {
 const DB_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
 /**
- * Everything needed to interact with a MySQL database but simplified.
+ * Everything needed to interact with a PostgreSQL database but simplified.
  * */
 export default class DatabaseConnection {
     private readonly options: DatabaseOptions;
@@ -28,13 +27,13 @@ export default class DatabaseConnection {
      * @example
      * const db = new DatabaseConnection({
      *     host: 'localhost',
-     *     user: 'root',
-     *     port: 3306,
+     *     user: 'postgres',
+     *     port: 5432,
      *     database: 'my_database',
      * });
      * */
     constructor(options: DatabaseOptions) {
-        if (!DB_NAME_PATTERN.test(options.database)) throw new DcbError(DcbErrorCodes.InvalidInput, 'Database name must only contain alphanumeric characters and underscores');
+        if (!DB_NAME_PATTERN.test(options.database)) throw new DcbError(DcbErrorCodes.InvalidInput, 'Database name must only contain alphanumeric characters, underscores and hyphens');
         this.options = options;
     }
 
@@ -46,11 +45,19 @@ export default class DatabaseConnection {
         return this.pool !== undefined;
     }
 
-
-
     private static readonly RETRYABLE_CODES: Set<string> = new Set([
-        'ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND', 'PROTOCOL_CONNECTION_LOST', 'ECONNRESET'
+        'ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNRESET',
+        '57P03' // cannot_connect_now (Postgres startet noch / fährt hoch)
     ]);
+
+    // pg wirft bei Timeouts bzw. abgebrochenen Verbindungen teils Fehler ohne code
+    private static readonly RETRYABLE_MESSAGES: RegExp = /timeout exceeded when trying to connect|Connection terminated/i;
+
+    private static isRetryable(error: unknown): boolean {
+        const code: string | undefined = (error as { code?: string }).code;
+        if (code && DatabaseConnection.RETRYABLE_CODES.has(code)) return true;
+        return DatabaseConnection.RETRYABLE_MESSAGES.test((error as Error).message ?? '');
+    }
 
     /**
      * Establishes a connection to the database.
@@ -67,28 +74,29 @@ export default class DatabaseConnection {
     public async connect(password: string, maxRetries: number = 3): Promise<void> {
         if (this.pool) return;
 
-        const poolOptions: PoolOptions = {
+        const poolConfig: PoolConfig = {
             host: this.options.host,
             user: this.options.user,
             port: this.options.port,
             password,
             database: this.options.database,
-            connectionLimit: this.options.connectionLimit ?? 10,
-            waitForConnections: true
+            max: this.options.connectionLimit ?? 10,
+            connectionTimeoutMillis: 5_000 // sonst wartet pg beim Verbindungsaufbau potenziell ewig
         };
 
         let lastError: unknown;
 
         for (let attempt: number = 1; attempt <= maxRetries; attempt++) {
-            const pool: Pool = createPool(poolOptions);
+            const pool: Pool = new Pool(poolConfig);
+
+            // Idle-Clients können jederzeit einen Fehler werfen, ohne Handler crasht der Prozess
+            pool.on('error', (err: Error): void => {
+                console.error('PostgreSQL pool error:', err.message);
+            });
 
             try {
-                const conn: PoolConnection = await pool.getConnection();
-                conn.release();
-
-                (pool as unknown as EventEmitter).on('error', (err: Error): void => {
-                    console.error('MySQL pool error:', err.message);
-                });
+                const client: PoolClient = await pool.connect();
+                client.release();
 
                 this.pool = pool;
                 return;
@@ -96,9 +104,7 @@ export default class DatabaseConnection {
                 await pool.end();
                 lastError = error;
 
-                const code: string | undefined = (error as { code?: string }).code;
-
-                if (!code || !DatabaseConnection.RETRYABLE_CODES.has(code)) throw this.wrapConnectError(error);
+                if (!DatabaseConnection.isRetryable(error)) throw this.wrapConnectError(error);
 
                 if (attempt < maxRetries) {
                     const delayMs: number = 500 * 2 ** (attempt - 1);
@@ -113,7 +119,10 @@ export default class DatabaseConnection {
     private wrapConnectError(error: unknown): DcbError {
         const code: string | undefined = (error as { code?: string }).code;
 
-        if (code === 'ER_ACCESS_DENIED_ERROR') return new DcbError(DcbErrorCodes.DbAuthFailed, 'Invalid credentials');
+        // 28P01 = invalid_password, 28000 = invalid_authorization_specification
+        if (code === '28P01' || code === '28000') return new DcbError(DcbErrorCodes.DbAuthFailed, 'Invalid credentials');
+        // 3D000 = invalid_catalog_name (Datenbank existiert nicht)
+        if (code === '3D000') return new DcbError(DcbErrorCodes.DbConnectionFailed, `Database "${this.options.database}" does not exist`);
         if (code === 'ECONNREFUSED' || code === 'ENOTFOUND' || code === 'ETIMEDOUT') {
             return new DcbError(DcbErrorCodes.DbConnectionFailed, `Could not reach database at ${this.options.host}:${this.options.port}`);
         }
@@ -138,21 +147,40 @@ export default class DatabaseConnection {
 
     /**
      * Function to query some sql within the connected database.
+     * Placeholders are `$1, $2, ...` (not `?` like in MySQL).
      * @param sql The sql to query.
      * @param values The values to replace in the sql.
      * @param timeout The timeout for the query in milliseconds. Default is 10 seconds.
      * @example
-     * await db.query('SELECT * FROM table WHERE id = ?', [1]);
+     * await db.query('SELECT * FROM users WHERE id = $1', [1]);
      *
-     * const result = await db.query('SELECT * FROM table WHERE id = ?', [1]) as RowDataPacket[];
+     * const rows = await db.query<{ id: string; xp: number }>('SELECT * FROM user_levels WHERE user_id = $1', ['123']);
      * @see {@link DatabaseConnection.constructor Database initialization}
      * @see {@link DatabaseConnection.connect Database connection}
-     * @returns The result of sql query.
+     * @returns The rows of the sql query.
      * */
-    public async query<T extends QueryResult = QueryResult>(sql: string, values?: any[], timeout: number = 10_000): Promise<T> {
+    public async query<T extends QueryResultRow = QueryResultRow>(sql: string, values?: unknown[], timeout: number = 10_000): Promise<T[]> {
+        const result: QueryResult<T> = await this.run<T>(sql, values, timeout);
+        return result.rows;
+    }
+
+    /**
+     * Like {@link DatabaseConnection.query}, but returns the number of affected rows.
+     * Meant for INSERT / UPDATE / DELETE (replacement for MySQL's `affectedRows`).
+     * @example
+     * const affected = await db.execute('DELETE FROM user_levels WHERE guild_id = $1', ['123']);
+     * @returns Number of affected rows.
+     * */
+    public async execute(sql: string, values?: unknown[], timeout: number = 10_000): Promise<number> {
+        const result: QueryResult = await this.run(sql, values, timeout);
+        return result.rowCount ?? 0;
+    }
+
+    private async run<T extends QueryResultRow = QueryResultRow>(sql: string, values: unknown[] | undefined, timeout: number): Promise<QueryResult<T>> {
         if (!this.pool) throw new DcbError(DcbErrorCodes.DbNotReady);
 
-        const [rows] = await this.pool.query<T>({sql, values, timeout});
-        return rows;
+        // query_timeout wird von pg unterstützt, fehlt aber in den @types/pg-QueryConfig
+        const config: QueryConfig = { text: sql, values, query_timeout: timeout } as QueryConfig;
+        return this.pool.query<T>(config);
     }
 }
