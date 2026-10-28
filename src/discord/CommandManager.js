@@ -122,7 +122,7 @@ export default class CommandManager {
                     if (existingCommand) {
                         if (localCommand.deleted) {
                             await applicationCommands.delete(existingCommand.id);
-                            this.logger.write(0, `🗑️ Command "${name}" deleted`);
+                            this.logger.info(`🗑️ Command "${name}" deleted`);
                             continue;
                         }
                         if (this.areCommandsDifferent(existingCommand, localCommand)) {
@@ -130,15 +130,15 @@ export default class CommandManager {
                                 description,
                                 options
                             });
-                            this.logger.write(0, `🔄 Command "${name}" updated`);
+                            this.logger.info(`🔄 Command "${name}" updated`);
                         }
                         else {
-                            this.logger.write(0, `⏭️ Command "${name}" unchanged`);
+                            this.logger.debug(`⏭️ Command "${name}" unchanged`);
                         }
                         continue;
                     }
                     if (localCommand.deleted) {
-                        this.logger.write(0, `⏭️ Command "${name}" skipped`);
+                        this.logger.debug(`⏭️ Command "${name}" skipped`);
                         continue;
                     }
                     await applicationCommands.create({
@@ -146,15 +146,15 @@ export default class CommandManager {
                         description,
                         options
                     });
-                    this.logger.write(0, `✅ Command "${name}" created`);
+                    this.logger.info(`✅ Command "${name}" created`);
                 }
                 catch (error) {
-                    this.logger.write(2, `❌ Command "${name}" failed to sync${guildId ? ` for guild [${guildId}]` : ''}`, error);
+                    this.logger.error(`❌ Command "${name}" failed to sync${guildId ? ` for guild [${guildId}]` : ''}`, error);
                 }
             }
         }
         catch (error) {
-            this.logger.write(2, `❌ Failed to fetch application commands${guildId ? ` for guild [${guildId}]` : ''}`, error);
+            this.logger.error(`❌ Failed to fetch application commands${guildId ? ` for guild [${guildId}]` : ''}`, error);
         }
     }
 }

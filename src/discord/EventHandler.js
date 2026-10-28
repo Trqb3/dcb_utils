@@ -35,7 +35,7 @@ export default class EventHandler {
             if (this.useDefaultCommandInteractionHandler) {
                 this.client.on('interactionCreate', (interaction) => this.handleCommandInteraction(interaction));
             }
-            this.logger.write(0, '🔌 Bot startup successful!', this.client.user?.tag);
+            this.logger.info('🔌 Bot startup successful!', this.client.user?.tag);
         });
         this.registerEvents();
     }
@@ -72,7 +72,7 @@ export default class EventHandler {
             return;
         const command = this.commandManager.commands.local.get(interaction.commandName);
         if (!command) {
-            this.logger.write(1, `⚠️ Unknown command executed: ${interaction.commandName}`);
+            this.logger.warn(`⚠️ Unknown command executed: ${interaction.commandName}`);
             return;
         }
         try {
@@ -114,7 +114,7 @@ export default class EventHandler {
             await command.callback(interaction, this.client, this.logger);
         }
         catch (error) {
-            this.logger.write(2, `❌ Command execution failed: ${interaction.commandName}`, error);
+            this.logger.error(`❌ Command execution failed: ${interaction.commandName}`, error);
         }
     }
 }
